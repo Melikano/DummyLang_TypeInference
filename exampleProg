@@ -1,0 +1,2 @@
+class Eq a where equal : a -> a -> Bool ;
+f = \x -> \y -> equal x y

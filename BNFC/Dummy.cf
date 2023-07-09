@@ -1,0 +1,39 @@
+token UIdent (upper (letter | digit | '_')*) ;
+token LIdent (lower (letter | digit | '_')*);
+token True {"True"};
+token False {"False"};
+
+Dummy_Prog. Prog ::= [ClassDec] [InstDec] [Expr];
+
+separator ClassDec ";";
+separator InstDec "";
+separator Expr "";
+
+ClassOp_Dec. ClassOpDec ::= LIdent ":" SType;
+ClassOp_Imp. ClassOpImp ::= LIdent "=" Expr;
+
+Class_Dec. ClassDec ::= "class" UIdent LIdent "where" [ClassOpDec];
+Inst_Dec. InstDec ::= "instance" UIdent "where" [ClassOpImp];
+
+separator ClassOpDec "";
+separator ClassOpImp "";
+
+Ass_Expr. Expr ::= LIdent "=" Expr;
+Abst_Expr. Expr ::= "\\"LIdent "->" Expr;
+Var_Expr. Expr ::= LIdent;
+App_Expr. Expr ::= Expr Expr;
+List_Expr. Expr ::= List;
+LCase_Expr. Expr ::= "case" Expr "of" List "->" Expr ";" List "->" Expr;
+True_Expr. Expr ::= True;
+False_Expr. Expr ::= False;
+
+Nil. List ::= "[]";
+Cons. List ::= LIdent ":" List;
+
+OverLoadedType. OvType ::= "<" UIdent LIdent "," ">" "=>" SType;
+TVar_SType. SType ::= LIdent;
+TCons_SType.  SType ::= UIdent LIdent;
+Bool_SType. SType ::= "Bool"; 
+Arrow_SType. SType ::= SType "->" SType;
+List_SType. SType ::= "[" SType "]";
+
