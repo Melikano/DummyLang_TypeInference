@@ -39,7 +39,10 @@ data Expr
 data List = Nil | Cons LIdent List
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-data OvType = OverLoadedType UIdent LIdent SType
+data TyC = TypeConstraint UIdent SType
+  deriving (C.Eq, C.Ord, C.Show, C.Read)
+
+data OvType = OverLoadedType [TyC] SType
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data SType
@@ -48,6 +51,9 @@ data SType
     | Bool_SType
     | Arrow_SType SType SType
     | List_SType SType
+  deriving (C.Eq, C.Ord, C.Show, C.Read)
+
+data DType = DType_OvType OvType | DType_SType SType
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 newtype UIdent = UIdent String

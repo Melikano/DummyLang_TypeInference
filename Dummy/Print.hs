@@ -203,9 +203,18 @@ instance Print Dummy.Abs.List where
     Dummy.Abs.Nil -> prPrec i 0 (concatD [doc (showString "[]")])
     Dummy.Abs.Cons lident list -> prPrec i 0 (concatD [prt 0 lident, doc (showString ":"), prt 0 list])
 
+instance Print Dummy.Abs.TyC where
+  prt i = \case
+    Dummy.Abs.TypeConstraint uident stype -> prPrec i 0 (concatD [prt 0 uident, prt 0 stype])
+
 instance Print Dummy.Abs.OvType where
   prt i = \case
-    Dummy.Abs.OverLoadedType uident lident stype -> prPrec i 0 (concatD [doc (showString "<"), prt 0 uident, prt 0 lident, doc (showString ","), doc (showString ">"), doc (showString "=>"), prt 0 stype])
+    Dummy.Abs.OverLoadedType tycs stype -> prPrec i 0 (concatD [doc (showString "<"), prt 0 tycs, doc (showString ">"), doc (showString "=>"), prt 0 stype])
+
+instance Print [Dummy.Abs.TyC] where
+  prt _ [] = concatD []
+  prt _ [x] = concatD [prt 0 x]
+  prt _ (x:xs) = concatD [prt 0 x, doc (showString ","), prt 0 xs]
 
 instance Print Dummy.Abs.SType where
   prt i = \case
@@ -214,3 +223,8 @@ instance Print Dummy.Abs.SType where
     Dummy.Abs.Bool_SType -> prPrec i 0 (concatD [doc (showString "Bool")])
     Dummy.Abs.Arrow_SType stype1 stype2 -> prPrec i 0 (concatD [prt 0 stype1, doc (showString "->"), prt 0 stype2])
     Dummy.Abs.List_SType stype -> prPrec i 0 (concatD [doc (showString "["), prt 0 stype, doc (showString "]")])
+
+instance Print Dummy.Abs.DType where
+  prt i = \case
+    Dummy.Abs.DType_OvType ovtype -> prPrec i 0 (concatD [prt 0 ovtype])
+    Dummy.Abs.DType_SType stype -> prPrec i 0 (concatD [prt 0 stype])

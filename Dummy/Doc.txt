@@ -38,8 +38,8 @@ The reserved words used in Dummy are the following:
 
 The symbols used in Dummy are the following:
   | ; | : | = | \
-  | -> | [] | < | ,
-  | > | => | [ | ]
+  | -> | [] | < | >
+  | => | , | [ | ]
 
 ===Comments===
 There are no single-line comments in the grammar.There are no multiple-line comments in the grammar.
@@ -76,12 +76,18 @@ All other symbols are terminals.
   |  |  **|**  | //False//
   | //List// | -> | ``[]``
   |  |  **|**  | //LIdent// ``:`` //List//
-  | //OvType// | -> | ``<`` //UIdent// //LIdent// ``,`` ``>`` ``=>`` //SType//
+  | //TyC// | -> | //UIdent// //SType//
+  | //OvType// | -> | ``<`` //[TyC]// ``>`` ``=>`` //SType//
+  | //[TyC]// | -> | **eps**
+  |  |  **|**  | //TyC//
+  |  |  **|**  | //TyC// ``,`` //[TyC]//
   | //SType// | -> | //LIdent//
   |  |  **|**  | //UIdent// //LIdent//
   |  |  **|**  | ``Bool``
   |  |  **|**  | //SType// ``->`` //SType//
   |  |  **|**  | ``[`` //SType// ``]``
+  | //DType// | -> | //OvType//
+  |  |  **|**  | //SType//
 
 
 

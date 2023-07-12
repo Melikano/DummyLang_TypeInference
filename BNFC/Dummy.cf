@@ -30,10 +30,14 @@ False_Expr. Expr ::= False;
 Nil. List ::= "[]";
 Cons. List ::= LIdent ":" List;
 
-OverLoadedType. OvType ::= "<" UIdent LIdent "," ">" "=>" SType;
+TypeConstraint. TyC ::= UIdent SType;
+OverLoadedType. OvType ::= "<" [TyC] ">" "=>" SType;
+separator TyC ",";
 TVar_SType. SType ::= LIdent;
 TCons_SType.  SType ::= UIdent LIdent;
 Bool_SType. SType ::= "Bool"; 
 Arrow_SType. SType ::= SType "->" SType;
 List_SType. SType ::= "[" SType "]";
 
+DType_OvType. DType ::= OvType;
+DType_SType. DType ::= SType;

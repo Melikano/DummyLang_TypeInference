@@ -20,8 +20,11 @@ module Dummy.Par
   , pListClassOpImp
   , pExpr
   , pList
+  , pTyC
   , pOvType
+  , pListTyC
   , pSType
+  , pDType
   ) where
 
 import Prelude
@@ -43,8 +46,11 @@ import Dummy.Lex
 %name pListClassOpImp ListClassOpImp
 %name pExpr Expr
 %name pList List
+%name pTyC TyC
 %name pOvType OvType
+%name pListTyC ListTyC
 %name pSType SType
+%name pDType DType
 -- no lexer declaration
 %monad { Err } { (>>=) } { return }
 %tokentype {Token}
@@ -140,9 +146,18 @@ List :: { Dummy.Abs.List }
 List
   : '[]' { Dummy.Abs.Nil } | LIdent ':' List { Dummy.Abs.Cons $1 $3 }
 
+TyC :: { Dummy.Abs.TyC }
+TyC : UIdent SType { Dummy.Abs.TypeConstraint $1 $2 }
+
 OvType :: { Dummy.Abs.OvType }
 OvType
-  : '<' UIdent LIdent ',' '>' '=>' SType { Dummy.Abs.OverLoadedType $2 $3 $7 }
+  : '<' ListTyC '>' '=>' SType { Dummy.Abs.OverLoadedType $2 $5 }
+
+ListTyC :: { [Dummy.Abs.TyC] }
+ListTyC
+  : {- empty -} { [] }
+  | TyC { (:[]) $1 }
+  | TyC ',' ListTyC { (:) $1 $3 }
 
 SType :: { Dummy.Abs.SType }
 SType
@@ -151,6 +166,11 @@ SType
   | 'Bool' { Dummy.Abs.Bool_SType }
   | SType '->' SType { Dummy.Abs.Arrow_SType $1 $3 }
   | '[' SType ']' { Dummy.Abs.List_SType $2 }
+
+DType :: { Dummy.Abs.DType }
+DType
+  : OvType { Dummy.Abs.DType_OvType $1 }
+  | SType { Dummy.Abs.DType_SType $1 }
 
 {
 

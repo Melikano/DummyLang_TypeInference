@@ -67,9 +67,13 @@ transList x = case x of
   Dummy.Abs.Nil -> failure x
   Dummy.Abs.Cons lident list -> failure x
 
+transTyC :: Dummy.Abs.TyC -> Result
+transTyC x = case x of
+  Dummy.Abs.TypeConstraint uident stype -> failure x
+
 transOvType :: Dummy.Abs.OvType -> Result
 transOvType x = case x of
-  Dummy.Abs.OverLoadedType uident lident stype -> failure x
+  Dummy.Abs.OverLoadedType tycs stype -> failure x
 
 transSType :: Dummy.Abs.SType -> Result
 transSType x = case x of
@@ -78,3 +82,8 @@ transSType x = case x of
   Dummy.Abs.Bool_SType -> failure x
   Dummy.Abs.Arrow_SType stype1 stype2 -> failure x
   Dummy.Abs.List_SType stype -> failure x
+
+transDType :: Dummy.Abs.DType -> Result
+transDType x = case x of
+  Dummy.Abs.DType_OvType ovtype -> failure x
+  Dummy.Abs.DType_SType stype -> failure x
