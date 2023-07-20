@@ -28,7 +28,7 @@ $u = [. \n]          -- universal: any character
 
 -- Symbols and non-identifier-like reserved words
 
-@rsyms = \; | \: | \= | \\ | \- \> | \[ \] | \< | \> | \= \> | \, | \[ | \]
+@rsyms = \; | \: | \= | \< | \> | \= \> | \[ \] | \\ | \- \> | \, | \[ | \]
 
 :-
 
@@ -39,14 +39,6 @@ $white+ ;
 @rsyms
     { tok (eitherResIdent TV) }
 
--- token UIdent
-$c (\_ | ($d | $l)) *
-    { tok (eitherResIdent T_UIdent) }
-
--- token LIdent
-$s (\_ | ($d | $l)) *
-    { tok (eitherResIdent T_LIdent) }
-
 -- token True
 T r u e
     { tok (eitherResIdent T_True) }
@@ -54,6 +46,14 @@ T r u e
 -- token False
 F a l s e
     { tok (eitherResIdent T_False) }
+
+-- token UIdent
+$c (\_ | ($d | $l)) *
+    { tok (eitherResIdent T_UIdent) }
+
+-- token LIdent
+$s (\_ | ($d | $l)) *
+    { tok (eitherResIdent T_LIdent) }
 
 -- Keywords and Ident
 $l $i*
@@ -72,10 +72,10 @@ data Tok
   | TV !String                    -- ^ Identifier.
   | TD !String                    -- ^ Float literal.
   | TC !String                    -- ^ Character literal.
-  | T_UIdent !String
-  | T_LIdent !String
   | T_True !String
   | T_False !String
+  | T_UIdent !String
+  | T_LIdent !String
   deriving (Eq, Show, Ord)
 
 -- | Smart constructor for 'Tok' for the sake of backwards compatibility.
@@ -138,10 +138,10 @@ tokenText t = case t of
   PT _ (TD s)   -> s
   PT _ (TC s)   -> s
   Err _         -> "#error"
-  PT _ (T_UIdent s) -> s
-  PT _ (T_LIdent s) -> s
   PT _ (T_True s) -> s
   PT _ (T_False s) -> s
+  PT _ (T_UIdent s) -> s
+  PT _ (T_LIdent s) -> s
 
 -- | Convert a token to a string.
 prToken :: Token -> String

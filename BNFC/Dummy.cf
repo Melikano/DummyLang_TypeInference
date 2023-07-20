@@ -1,22 +1,27 @@
-token UIdent (upper (letter | digit | '_')*) ;
-token LIdent (lower (letter | digit | '_')*);
 token True {"True"};
 token False {"False"};
+token UIdent (upper (letter | digit | '_')*) ;
+token LIdent (lower (letter | digit | '_')*);
 
 Dummy_Prog. Prog ::= [ClassDec] [InstDec] [Expr];
 
 separator ClassDec ";";
-separator InstDec "";
-separator Expr "";
+separator InstDec ";";
+separator Expr ";";
 
 ClassOp_Dec. ClassOpDec ::= LIdent ":" SType;
 ClassOp_Imp. ClassOpImp ::= LIdent "=" Expr;
 
 Class_Dec. ClassDec ::= "class" UIdent LIdent "where" [ClassOpDec];
-Inst_Dec. InstDec ::= "instance" UIdent "where" [ClassOpImp];
+Inst_Dec. InstDec ::= "instance" UIdent SType "where" [ClassOpImp];
+Inst_Dec_With_Constraint. InstDec ::= "instance <" TyC "> => " UIdent SType "where" [ClassOpImp];
+
 
 separator ClassOpDec "";
 separator ClassOpImp "";
+
+Nil. List ::= "[]";
+Cons. List ::= LIdent ":" LIdent;
 
 Ass_Expr. Expr ::= LIdent "=" Expr;
 Abst_Expr. Expr ::= "\\"LIdent "->" Expr;
@@ -27,8 +32,7 @@ LCase_Expr. Expr ::= "case" Expr "of" List "->" Expr ";" List "->" Expr;
 True_Expr. Expr ::= True;
 False_Expr. Expr ::= False;
 
-Nil. List ::= "[]";
-Cons. List ::= LIdent ":" List;
+
 
 TypeConstraint. TyC ::= UIdent SType;
 OverLoadedType. OvType ::= "<" [TyC] ">" "=>" SType;

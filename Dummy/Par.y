@@ -18,8 +18,8 @@ module Dummy.Par
   , pInstDec
   , pListClassOpDec
   , pListClassOpImp
-  , pExpr
   , pList
+  , pExpr
   , pTyC
   , pOvType
   , pListTyC
@@ -44,8 +44,8 @@ import Dummy.Lex
 %name pInstDec InstDec
 %name pListClassOpDec ListClassOpDec
 %name pListClassOpImp ListClassOpImp
-%name pExpr Expr
 %name pList List
+%name pExpr Expr
 %name pTyC TyC
 %name pOvType OvType
 %name pListTyC ListTyC
@@ -73,24 +73,24 @@ import Dummy.Lex
   'instance' { PT _ (TS _ 16)     }
   'of'       { PT _ (TS _ 17)     }
   'where'    { PT _ (TS _ 18)     }
-  L_UIdent   { PT _ (T_UIdent $$) }
-  L_LIdent   { PT _ (T_LIdent $$) }
   L_True     { PT _ (T_True $$)   }
   L_False    { PT _ (T_False $$)  }
+  L_UIdent   { PT _ (T_UIdent $$) }
+  L_LIdent   { PT _ (T_LIdent $$) }
 
 %%
-
-UIdent :: { Dummy.Abs.UIdent }
-UIdent  : L_UIdent { Dummy.Abs.UIdent $1 }
-
-LIdent :: { Dummy.Abs.LIdent }
-LIdent  : L_LIdent { Dummy.Abs.LIdent $1 }
 
 True :: { Dummy.Abs.True }
 True  : L_True { Dummy.Abs.True $1 }
 
 False :: { Dummy.Abs.False }
 False  : L_False { Dummy.Abs.False $1 }
+
+UIdent :: { Dummy.Abs.UIdent }
+UIdent  : L_UIdent { Dummy.Abs.UIdent $1 }
+
+LIdent :: { Dummy.Abs.LIdent }
+LIdent  : L_LIdent { Dummy.Abs.LIdent $1 }
 
 Prog :: { Dummy.Abs.Prog }
 Prog
@@ -104,10 +104,15 @@ ListClassDec
 
 ListInstDec :: { [Dummy.Abs.InstDec] }
 ListInstDec
-  : {- empty -} { [] } | InstDec ListInstDec { (:) $1 $2 }
+  : {- empty -} { [] }
+  | InstDec { (:[]) $1 }
+  | InstDec ';' ListInstDec { (:) $1 $3 }
 
 ListExpr :: { [Dummy.Abs.Expr] }
-ListExpr : {- empty -} { [] } | Expr ListExpr { (:) $1 $2 }
+ListExpr
+  : {- empty -} { [] }
+  | Expr { (:[]) $1 }
+  | Expr ';' ListExpr { (:) $1 $3 }
 
 ClassOpDec :: { Dummy.Abs.ClassOpDec }
 ClassOpDec : LIdent ':' SType { Dummy.Abs.ClassOp_Dec $1 $3 }
@@ -121,7 +126,8 @@ ClassDec
 
 InstDec :: { Dummy.Abs.InstDec }
 InstDec
-  : 'instance' UIdent 'where' ListClassOpImp { Dummy.Abs.Inst_Dec $2 $4 }
+  : 'instance' UIdent SType 'where' ListClassOpImp { Dummy.Abs.Inst_Dec $2 $3 $5 }
+  | 'instance' '<' TyC '>' '=>' UIdent SType 'where' ListClassOpImp { Dummy.Abs.Inst_Dec_With_Constraint $3 $6 $7 $9 }
 
 ListClassOpDec :: { [Dummy.Abs.ClassOpDec] }
 ListClassOpDec
@@ -130,6 +136,11 @@ ListClassOpDec
 ListClassOpImp :: { [Dummy.Abs.ClassOpImp] }
 ListClassOpImp
   : {- empty -} { [] } | ClassOpImp ListClassOpImp { (:) $1 $2 }
+
+List :: { Dummy.Abs.List }
+List
+  : '[]' { Dummy.Abs.Nil }
+  | LIdent ':' LIdent { Dummy.Abs.Cons $1 $3 }
 
 Expr :: { Dummy.Abs.Expr }
 Expr
@@ -141,10 +152,6 @@ Expr
   | 'case' Expr 'of' List '->' Expr ';' List '->' Expr { Dummy.Abs.LCase_Expr $2 $4 $6 $8 $10 }
   | True { Dummy.Abs.True_Expr $1 }
   | False { Dummy.Abs.False_Expr $1 }
-
-List :: { Dummy.Abs.List }
-List
-  : '[]' { Dummy.Abs.Nil } | LIdent ':' List { Dummy.Abs.Cons $1 $3 }
 
 TyC :: { Dummy.Abs.TyC }
 TyC : UIdent SType { Dummy.Abs.TypeConstraint $1 $2 }

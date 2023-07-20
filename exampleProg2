@@ -1,0 +1,12 @@
+class Eq a where equal : a -> a -> Bool ;
+
+instance <Eq a> => Eq [a] where
+    equal = \xs -> \ys -> True ;
+
+
+tail = \xs -> case xs of
+    [] -> [] ;
+    a:as -> as
+
+
+f = \x -> \y -> equal x tail y

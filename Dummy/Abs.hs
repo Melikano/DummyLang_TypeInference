@@ -22,7 +22,12 @@ data ClassOpImp = ClassOp_Imp LIdent Expr
 data ClassDec = Class_Dec UIdent LIdent [ClassOpDec]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-data InstDec = Inst_Dec UIdent [ClassOpImp]
+data InstDec
+    = Inst_Dec UIdent SType [ClassOpImp]
+    | Inst_Dec_With_Constraint TyC UIdent SType [ClassOpImp]
+  deriving (C.Eq, C.Ord, C.Show, C.Read)
+
+data List = Nil | Cons LIdent LIdent
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data Expr
@@ -34,9 +39,6 @@ data Expr
     | LCase_Expr Expr List Expr List Expr
     | True_Expr True
     | False_Expr False
-  deriving (C.Eq, C.Ord, C.Show, C.Read)
-
-data List = Nil | Cons LIdent List
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data TyC = TypeConstraint UIdent SType
@@ -56,15 +58,15 @@ data SType
 data DType = DType_OvType OvType | DType_SType SType
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-newtype UIdent = UIdent String
-  deriving (C.Eq, C.Ord, C.Show, C.Read, Data.String.IsString)
-
-newtype LIdent = LIdent String
-  deriving (C.Eq, C.Ord, C.Show, C.Read, Data.String.IsString)
-
 newtype True = True String
   deriving (C.Eq, C.Ord, C.Show, C.Read, Data.String.IsString)
 
 newtype False = False String
+  deriving (C.Eq, C.Ord, C.Show, C.Read, Data.String.IsString)
+
+newtype UIdent = UIdent String
+  deriving (C.Eq, C.Ord, C.Show, C.Read, Data.String.IsString)
+
+newtype LIdent = LIdent String
   deriving (C.Eq, C.Ord, C.Show, C.Read, Data.String.IsString)
 

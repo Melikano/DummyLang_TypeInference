@@ -138,14 +138,14 @@ instance Print Integer where
 instance Print Double where
   prt _ x = doc (shows x)
 
-instance Print Dummy.Abs.UIdent where
-  prt _ (Dummy.Abs.UIdent i) = doc $ showString i
-instance Print Dummy.Abs.LIdent where
-  prt _ (Dummy.Abs.LIdent i) = doc $ showString i
 instance Print Dummy.Abs.True where
   prt _ (Dummy.Abs.True i) = doc $ showString i
 instance Print Dummy.Abs.False where
   prt _ (Dummy.Abs.False i) = doc $ showString i
+instance Print Dummy.Abs.UIdent where
+  prt _ (Dummy.Abs.UIdent i) = doc $ showString i
+instance Print Dummy.Abs.LIdent where
+  prt _ (Dummy.Abs.LIdent i) = doc $ showString i
 instance Print Dummy.Abs.Prog where
   prt i = \case
     Dummy.Abs.Dummy_Prog classdecs instdecs exprs -> prPrec i 0 (concatD [prt 0 classdecs, prt 0 instdecs, prt 0 exprs])
@@ -157,11 +157,13 @@ instance Print [Dummy.Abs.ClassDec] where
 
 instance Print [Dummy.Abs.InstDec] where
   prt _ [] = concatD []
-  prt _ (x:xs) = concatD [prt 0 x, prt 0 xs]
+  prt _ [x] = concatD [prt 0 x]
+  prt _ (x:xs) = concatD [prt 0 x, doc (showString ";"), prt 0 xs]
 
 instance Print [Dummy.Abs.Expr] where
   prt _ [] = concatD []
-  prt _ (x:xs) = concatD [prt 0 x, prt 0 xs]
+  prt _ [x] = concatD [prt 0 x]
+  prt _ (x:xs) = concatD [prt 0 x, doc (showString ";"), prt 0 xs]
 
 instance Print Dummy.Abs.ClassOpDec where
   prt i = \case
@@ -177,7 +179,8 @@ instance Print Dummy.Abs.ClassDec where
 
 instance Print Dummy.Abs.InstDec where
   prt i = \case
-    Dummy.Abs.Inst_Dec uident classopimps -> prPrec i 0 (concatD [doc (showString "instance"), prt 0 uident, doc (showString "where"), prt 0 classopimps])
+    Dummy.Abs.Inst_Dec uident stype classopimps -> prPrec i 0 (concatD [doc (showString "instance"), prt 0 uident, prt 0 stype, doc (showString "where"), prt 0 classopimps])
+    Dummy.Abs.Inst_Dec_With_Constraint tyc uident stype classopimps -> prPrec i 0 (concatD [doc (showString "instance"), doc (showString "<"), prt 0 tyc, doc (showString ">"), doc (showString "=>"), prt 0 uident, prt 0 stype, doc (showString "where"), prt 0 classopimps])
 
 instance Print [Dummy.Abs.ClassOpDec] where
   prt _ [] = concatD []
@@ -186,6 +189,11 @@ instance Print [Dummy.Abs.ClassOpDec] where
 instance Print [Dummy.Abs.ClassOpImp] where
   prt _ [] = concatD []
   prt _ (x:xs) = concatD [prt 0 x, prt 0 xs]
+
+instance Print Dummy.Abs.List where
+  prt i = \case
+    Dummy.Abs.Nil -> prPrec i 0 (concatD [doc (showString "[]")])
+    Dummy.Abs.Cons lident1 lident2 -> prPrec i 0 (concatD [prt 0 lident1, doc (showString ":"), prt 0 lident2])
 
 instance Print Dummy.Abs.Expr where
   prt i = \case
@@ -197,11 +205,6 @@ instance Print Dummy.Abs.Expr where
     Dummy.Abs.LCase_Expr expr1 list1 expr2 list2 expr3 -> prPrec i 0 (concatD [doc (showString "case"), prt 0 expr1, doc (showString "of"), prt 0 list1, doc (showString "->"), prt 0 expr2, doc (showString ";"), prt 0 list2, doc (showString "->"), prt 0 expr3])
     Dummy.Abs.True_Expr true -> prPrec i 0 (concatD [prt 0 true])
     Dummy.Abs.False_Expr false -> prPrec i 0 (concatD [prt 0 false])
-
-instance Print Dummy.Abs.List where
-  prt i = \case
-    Dummy.Abs.Nil -> prPrec i 0 (concatD [doc (showString "[]")])
-    Dummy.Abs.Cons lident list -> prPrec i 0 (concatD [prt 0 lident, doc (showString ":"), prt 0 list])
 
 instance Print Dummy.Abs.TyC where
   prt i = \case
