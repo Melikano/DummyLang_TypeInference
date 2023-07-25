@@ -37,9 +37,9 @@ The reserved words used in Dummy are the following:
   | ``of`` | ``where`` |  |
 
 The symbols used in Dummy are the following:
-  | ; | : | = | <
-  | > | => | [] | \
-  | -> | , | [ | ]
+  | ; | : | = | []
+  | \ | -> | < | >
+  | => | , | [ | ]
 
 ===Comments===
 There are no single-line comments in the grammar.There are no multiple-line comments in the grammar.
@@ -58,12 +58,12 @@ All other symbols are terminals.
   |  |  **|**  | //InstDec//
   |  |  **|**  | //InstDec// ``;`` //[InstDec]//
   | //[Expr]// | -> | **eps**
-  |  |  **|**  | //Expr// //[Expr]//
+  |  |  **|**  | //Expr//
+  |  |  **|**  | //Expr// ``;`` //[Expr]//
   | //ClassOpDec// | -> | //LIdent// ``:`` //SType//
   | //ClassOpImp// | -> | //LIdent// ``=`` //Expr//
   | //ClassDec// | -> | ``class`` //UIdent// //LIdent// ``where`` //[ClassOpDec]//
-  | //InstDec// | -> | ``instance`` //UIdent// //SType// ``where`` //[ClassOpImp]//
-  |  |  **|**  | ``instance`` ``<`` //TyC// ``>`` ``=>`` //UIdent// //SType// ``where`` //[ClassOpImp]//
+  | //InstDec// | -> | ``instance`` //C// //UIdent// //SType// ``where`` //[ClassOpImp]//
   | //[ClassOpDec]// | -> | **eps**
   |  |  **|**  | //ClassOpDec// //[ClassOpDec]//
   | //[ClassOpImp]// | -> | **eps**
@@ -78,8 +78,9 @@ All other symbols are terminals.
   |  |  **|**  | ``case`` //Expr// ``of`` //List// ``->`` //Expr// ``;`` //List// ``->`` //Expr//
   |  |  **|**  | //True//
   |  |  **|**  | //False//
+  | //C// | -> | ``<`` //[TyC]// ``>`` ``=>``
   | //TyC// | -> | //UIdent// //SType//
-  | //OvType// | -> | ``<`` //[TyC]// ``>`` ``=>`` //SType//
+  | //OvType// | -> | //C// //SType//
   | //[TyC]// | -> | **eps**
   |  |  **|**  | //TyC//
   |  |  **|**  | //TyC// ``,`` //[TyC]//

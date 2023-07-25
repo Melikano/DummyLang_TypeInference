@@ -22,9 +22,7 @@ data ClassOpImp = ClassOp_Imp LIdent Expr
 data ClassDec = Class_Dec UIdent LIdent [ClassOpDec]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-data InstDec
-    = Inst_Dec UIdent LIdent [ClassOpImp]
-    | Inst_Dec_With_Constraint TyC UIdent LIdent [ClassOpImp]
+data InstDec = Inst_Dec C UIdent SType [ClassOpImp]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data List = Nil | Cons LIdent LIdent
@@ -41,10 +39,13 @@ data Expr
     | False_Expr False
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
+data C = Constraints [TyC]
+  deriving (C.Eq, C.Ord, C.Show, C.Read)
+
 data TyC = TypeConstraint UIdent SType
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-data OvType = OverLoadedType [TyC] SType
+data OvType = OverLoadedType C SType
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data SType

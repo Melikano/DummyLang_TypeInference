@@ -49,8 +49,7 @@ transClassDec x = case x of
 
 transInstDec :: Dummy.Abs.InstDec -> Result
 transInstDec x = case x of
-  Dummy.Abs.Inst_Dec uident lident classopimps -> failure x
-  Dummy.Abs.Inst_Dec_With_Constraint tyc uident lident classopimps -> failure x
+  Dummy.Abs.Inst_Dec c uident stype classopimps -> failure x
 
 transList :: Dummy.Abs.List -> Result
 transList x = case x of
@@ -68,13 +67,17 @@ transExpr x = case x of
   Dummy.Abs.True_Expr true -> failure x
   Dummy.Abs.False_Expr false -> failure x
 
+transC :: Dummy.Abs.C -> Result
+transC x = case x of
+  Dummy.Abs.Constraints tycs -> failure x
+
 transTyC :: Dummy.Abs.TyC -> Result
 transTyC x = case x of
   Dummy.Abs.TypeConstraint uident stype -> failure x
 
 transOvType :: Dummy.Abs.OvType -> Result
 transOvType x = case x of
-  Dummy.Abs.OverLoadedType tycs stype -> failure x
+  Dummy.Abs.OverLoadedType c stype -> failure x
 
 transSType :: Dummy.Abs.SType -> Result
 transSType x = case x of

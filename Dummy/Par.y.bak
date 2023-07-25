@@ -20,6 +20,7 @@ module Dummy.Par
   , pListClassOpImp
   , pList
   , pExpr
+  , pC
   , pTyC
   , pOvType
   , pListTyC
@@ -46,6 +47,7 @@ import Dummy.Lex
 %name pListClassOpImp ListClassOpImp
 %name pList List
 %name pExpr Expr
+%name pC C
 %name pTyC TyC
 %name pOvType OvType
 %name pListTyC ListTyC
@@ -109,7 +111,10 @@ ListInstDec
   | InstDec ';' ListInstDec { (:) $1 $3 }
 
 ListExpr :: { [Dummy.Abs.Expr] }
-ListExpr : {- empty -} { [] } | Expr ListExpr { (:) $1 $2 }
+ListExpr
+  : {- empty -} { [] }
+  | Expr { (:[]) $1 }
+  | Expr ';' ListExpr { (:) $1 $3 }
 
 ClassOpDec :: { Dummy.Abs.ClassOpDec }
 ClassOpDec : LIdent ':' SType { Dummy.Abs.ClassOp_Dec $1 $3 }
@@ -123,8 +128,7 @@ ClassDec
 
 InstDec :: { Dummy.Abs.InstDec }
 InstDec
-  : 'instance' UIdent SType 'where' ListClassOpImp { Dummy.Abs.Inst_Dec $2 $3 $5 }
-  | 'instance' '<' TyC '>' '=>' UIdent SType 'where' ListClassOpImp { Dummy.Abs.Inst_Dec_With_Constraint $3 $6 $7 $9 }
+  : 'instance' C UIdent SType 'where' ListClassOpImp { Dummy.Abs.Inst_Dec $2 $3 $4 $6 }
 
 ListClassOpDec :: { [Dummy.Abs.ClassOpDec] }
 ListClassOpDec
@@ -150,12 +154,14 @@ Expr
   | True { Dummy.Abs.True_Expr $1 }
   | False { Dummy.Abs.False_Expr $1 }
 
+C :: { Dummy.Abs.C }
+C : '<' ListTyC '>' '=>' { Dummy.Abs.Constraints $2 }
+
 TyC :: { Dummy.Abs.TyC }
 TyC : UIdent SType { Dummy.Abs.TypeConstraint $1 $2 }
 
 OvType :: { Dummy.Abs.OvType }
-OvType
-  : '<' ListTyC '>' '=>' SType { Dummy.Abs.OverLoadedType $2 $5 }
+OvType : C SType { Dummy.Abs.OverLoadedType $1 $2 }
 
 ListTyC :: { [Dummy.Abs.TyC] }
 ListTyC
