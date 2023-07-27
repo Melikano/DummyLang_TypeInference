@@ -1,5 +1,7 @@
 module TypeInference where
 
+import Data.Char
+import Data.List
 import Dummy.Abs
 import Dummy.Print
 import Lib.Monads
@@ -8,19 +10,19 @@ import Unification
 import Utils
 
 restrictedLinearize ::
-  [LIdent] -> [LIdent] -> [(SType, UIdent)] -> TyRel -> [Sub] -> Either String ([LIdent], [(SType, UIdent)], [Sub])
-restrictedLinearize [] rbs cs tyrel subs = return (rbs, cs, subs)
-restrictedLinearize (b : bs) rbs cs tyrel subs = do
+  [LIdent] -> [LIdent] -> [(SType, UIdent)] -> TyRel -> [Sub] -> [(String, String)] -> Either String ([LIdent], [(SType, UIdent)], [Sub], [(String, String)])
+restrictedLinearize [] rbs cs tyrel subs dicts = return (rbs, cs, subs, dicts)
+restrictedLinearize (b : bs) rbs cs tyrel subs dicts = do
   case lookup b subs of
-    Nothing -> restrictedLinearize bs (b : rbs) cs tyrel subs
+    Nothing -> restrictedLinearize bs (b : rbs) cs tyrel subs dicts
     Just s -> do
       cSubs <- coalesce (b, s) subs
       case lookup (TVar_SType b) cs of
-        Nothing -> restrictedLinearize bs rbs cs tyrel cSubs
+        Nothing -> restrictedLinearize bs rbs cs tyrel cSubs dicts
         Just c -> do
           let css = replace (TVar_SType b, c) (s, c) cs
           let reducedConstraints = applyTypeRels tyrel css
-          restrictedLinearize bs rbs reducedConstraints tyrel cSubs
+          restrictedLinearize bs rbs reducedConstraints tyrel cSubs (("dict" ++ show c ++ show b, "dict" ++ show c ++ mshow s) : dicts)
 
 myEq :: SType -> SType -> Bool
 myEq (TVar_SType _) (TVar_SType _) = Prelude.True
@@ -31,13 +33,10 @@ myEq Bool_SType Bool_SType = Prelude.True
 myEq _ _ = Prelude.False
 
 getAllEqns ::
-  [Either String SolvedEqn] -> Either String SolvedEqn
-getAllEqns = foldr allEqns (Right ([], [], [], []))
+  [SolvedEqn] -> SolvedEqn
+getAllEqns = foldr allEqns ([], [], [], [])
   where
-    allEqns newEitherFBS accEitherFBS = do
-      (f, b, c, s) <- newEitherFBS
-      (fs, bs, cs, ss) <- accEitherFBS
-      return (fs ++ f, b ++ bs, c ++ cs, unique (ss ++ s))
+    allEqns (f, b, c, s) (fs, bs, cs, ss) = (fs ++ f, b ++ bs, c ++ cs, unique (ss ++ s))
 
 lookupSType :: SType -> [(SType, a)] -> Maybe a
 lookupSType st [] = Nothing
@@ -60,25 +59,27 @@ procExist ::
   TyRel ->
   [LIdent] ->
   [TyC] ->
-  [Either String SolvedEqn] ->
-  Either String ([LIdent], [LIdent], [(SType, UIdent)], [Sub])
+  [SolvedEqn] ->
+  Either String ([LIdent], [LIdent], [(SType, UIdent)], [Sub], [(String, String)])
 procExist tyrel bounds constraints eqns = do
   let parsedConstraints = map (\(TypeConstraint u l) -> (l, u)) constraints
-  (innerFrees, innerBounds, innerConstraints, innerSubs) <- getAllEqns eqns
+  let (innerFrees, innerBounds, innerConstraints, innerSubs) = getAllEqns eqns
   let allBounds = bounds ++ innerBounds
   let allConstraints = parsedConstraints ++ innerConstraints
-  (remainingBounds, remainingConstraints, remainingSubs) <-
+  (remainingBounds, remainingConstraints, remainingSubs, dicts) <-
     restrictedLinearize
       allBounds
       []
       allConstraints
       tyrel
       innerSubs
+      []
   return
     ( filter (`notElem` allBounds) innerFrees,
       remainingBounds,
       remainingConstraints,
-      remainingSubs
+      remainingSubs,
+      dicts
     )
 
 procEqn :: (SType, SType) -> Either String SolvedEqn
@@ -87,51 +88,6 @@ procEqn (lt1, lt2) = do
   subs <- esubs
   return (vars lt1 ++ vars lt2, [], [], subs)
 
--- first get the equations by running judgements
--- then solve the equations to get list of free vars, list of bound vars and list of subs
--- linearize free vars and remaining subs to empty all frees
--- the sub for Q (which we passed as the total type) is the answer of type inference
--- typeInference :: Prog -> Either String DType
--- typeInference (Dummy_Prog classDecs instanceDecs exps) = do
---   let Class_Dec name tyVar ops = head classDecs
---   let env = judgeClassDec ops 0 name tyVar
---   let tyrel = judgeInstDec instanceDecs
---   -- return tyrel
---   result <-
---     evalStateT
---       (judgeExpr (head exps) (LIdent "Q"))
---       ( 0,
---         [],
---         ( LIdent "tail",
---           ( LIdent "TE",
---             TypeExist
---               [LIdent "TEE"]
---               []
---               [ TypeEqn
---                   ( TVar_SType (LIdent "TE"),
---                     Arrow_SType (List_SType (TVar_SType (LIdent "TEE"))) (List_SType (TVar_SType (LIdent "TEE")))
---                   )
---               ]
---           )
---         )
---           : env
---       )
---   (f, b, cs, subs) <- solveEquations tyrel result
--- (finalConstraints, finalSubs) <- emptyFrees (filter (/= LIdent "Q") f) b cs subs
--- case lookup "Q" (map (\(LIdent x, s) -> (x, s)) subs) of
---   Nothing -> Right (DType_SType (TVar_SType (LIdent "T0")))
---   Just s -> case cs of
---     [] -> Right (DType_SType s)
---     cs -> Right (DType_OvType (OverLoadedType (map (\(l, u) -> TypeConstraint u l) cs) s))
-
--- call restricted linearize on free vars to get rid of them
--- emptyFrees :: [LIdent] -> [LIdent] -> [(SType, UIdent)] -> [Sub] -> Either String ([(SType, UIdent)], [Sub])
--- emptyFrees [] bs cs subs = return (cs, subs)
--- emptyFrees frees bs cs subs = do
---   (f, css, ss) <- restrictedLinearize frees bs cs subs
---   return (css, ss)
-
--- function that sets counter in a state (Ryan's Tutorial notes)
 setCounter :: Int -> ExprInferer ()
 setCounter counter = do
   modify (mapFst (const counter))
@@ -153,18 +109,19 @@ newTypeVar = do
 runJudge (Dummy_Prog classDecs instanceDecs exps) = do
   let cenv = judgeClassDec classDecs
   let (ienv, _) = sth instanceDecs
-  -- (a, b) <- evalStateT (judgeExprs cenv ienv (head exps) (LIdent "Q")) (0,[(LIdent "tail", LIdent "TT0")])
-  -- return a
-  (allres, allst) <-
-    foldl
-      (f cenv ienv)
-      (Right ((Right ([], [], [], []), Var_Expr (LIdent "q"), []), (0, [])))
-      exps
-  return allst 
-  where
-    f cenv ienv  (Right (res, (cntr, ctx))) e =
-      evalStateT (judgeExprs cenv ienv e (LIdent ("Q" ++ show cntr))) (cntr,ctx)
-    f cenv ienv l e = l
+  (a, b) <- evalStateT (judgeExprs cenv ienv (head exps) (LIdent "Q")) (0, [(LIdent "tail", LIdent "TT0")])
+  return a
+
+-- (allres, allst) <-
+--   foldl
+--     (f cenv ienv)
+--     (Right ((([], [], [], []), Var_Expr (LIdent "q"), []), (0, [])))
+--     exps
+-- return allst
+-- where
+--   f cenv ienv (Right (res, (cntr, ctx))) e =
+--     evalStateT (judgeExprs cenv ienv e (LIdent ("Q" ++ show cntr))) (cntr, ctx)
+--   f cenv ienv l e = l
 
 -- (finalConstraints, finalSubs) <- emptyFrees (filter (/= LIdent "Q") f) b c subs
 -- return finalSubs
@@ -212,29 +169,68 @@ judgeExprs cenv ienv exp qType = do
   state <- get
   return (result, state)
 
-judgeExpr :: CEnv -> IEnv -> Expr -> LIdent -> ExprInferer (Either String SolvedEqn, Expr, [String])
+include :: String -> String -> Bool
+include xs ys = (any (isPrefixOf ys) . tails) $ xs
+
+genCode :: Expr -> [(String, String)] -> Expr
+genCode (App_Expr x (Var_Expr (LIdent y))) ienv = case lookup y ienv of
+  Nothing -> App_Expr x (Var_Expr (LIdent y))
+  Just d -> App_Expr x (Var_Expr (LIdent d))
+genCode (App_Expr l r) ienv = App_Expr (genCode l ienv) (genCode r ienv)
+genCode (Abst_Expr x t) ienv = Abst_Expr x (genCode t ienv)
+genCode (LCase_Expr t Nil t0 (Cons a as) t1) ienv = LCase_Expr (genCode t ienv) Nil (genCode t0 ienv) (Cons a as) (genCode t1 ienv)
+genCode e i = e
+
+processDictionaries :: [(String, String)] -> [String] -> [(String, Dictionary)] -> ([(String, Dictionary)], [String])
+processDictionaries dicts prevDicts ienv = (resolvedDicts, remainingDicts ++ unresolvedDicts)
+  where
+    remainingDicts = filter (`notElem` map fst dicts) prevDicts
+    resolvedDicts =
+      foldr
+        ( ( \d acc -> case lookup d ienv of
+              Nothing -> acc
+              Just d' -> (d, d') : acc
+          )
+            . fst
+        )
+        []
+        dicts
+    unresolvedDicts = filter (`notElem` map fst resolvedDicts) (map snd dicts)
+
+judgeExpr :: CEnv -> IEnv -> Expr -> LIdent -> ExprInferer (SolvedEqn, Expr, [String])
 judgeExpr cenv ienv (Ass_Expr x t) qType = do
   (_, varCtx) <- get
   tType <- newTypeVar
   (tEqns, innerExpr, innerDicts) <- judgeExpr cenv ienv t qType
   setContext $ (x, tType) : varCtx
-  let newEqn = procEqn (TVar_SType qType, TVar_SType tType)
-  return (procExist ([], []) [tType] [] [newEqn, tEqns], Ass_Expr x innerExpr, innerDicts)
+  case procEqn (TVar_SType qType, TVar_SType tType) of
+    Left e -> throwError' e
+    Right newEqn -> case procExist ([], []) [tType] [] [newEqn, tEqns] of
+      Left e -> throwError' e
+      Right (fs, bs, cs, subs, dicts) ->
+        let (resolvedDicts, unresolvedDicts) = processDictionaries dicts innerDicts ienv
+         in return ((fs, bs, cs, subs), genCode (Ass_Expr x innerExpr) dicts, unresolvedDicts)
 judgeExpr cenv ienv (Var_Expr x) qType = do
   (_, varCtx) <- get
   let cls = filter (\(_, _, ops) -> any (\(x', s') -> x' == x) ops) cenv
   case cls of
     [] -> case lookup x varCtx of
       Nothing -> throwError' ("free " ++ show x)
-      Just p -> return (procEqn (TVar_SType qType, TVar_SType p), Var_Expr x, [])
+      Just p -> case procEqn (TVar_SType qType, TVar_SType p) of
+        Left e -> throwError' e
+        Right solvedEqn -> return (solvedEqn, Var_Expr x, [])
     [(UIdent u, tycs, ops)] -> case lookup x ops of
       Nothing -> throwError' "Error"
-      Just s ->
-        return
-          ( procExist ([], []) (vars s) tycs [procEqn (TVar_SType qType, s)],
-            App_Expr (Var_Expr x) (Var_Expr (LIdent ("dict" ++ u))),
-            ["dict" ++ u]
-          )
+      Just s -> case procEqn (TVar_SType qType, s) of
+        Left e -> throwError' e
+        Right eq -> case procExist ([], []) (vars s) tycs [eq] of
+          Left e -> throwError' e
+          Right (fs, bs, cs, subs, dicts) ->
+            return
+              ( (fs, bs, cs, subs),
+                App_Expr (Var_Expr x) (Var_Expr (LIdent ("dict" ++ u))),
+                ["dict" ++ u]
+              )
     _ -> throwError' "redundant class operations"
 judgeExpr cenv ienv (Abst_Expr x t) qType = do
   (_, varCtx) <- get
@@ -246,7 +242,13 @@ judgeExpr cenv ienv (Abst_Expr x t) qType = do
   let newEqn =
         procEqn
           (TVar_SType qType, Arrow_SType (TVar_SType xType) (TVar_SType tType))
-  return (procExist ([], []) [xType, tType] [] [newEqn, tEqns], Abst_Expr x innerExpr, innerDicts)
+  case newEqn of
+    Left e -> throwError' e
+    Right eqn -> case procExist ([], []) [xType, tType] [] [eqn, tEqns] of
+      Left e -> throwError' e
+      Right (fs, bs, cs, subs, dicts) ->
+        let (resolvedDicts, unresolvedDicts) = processDictionaries dicts innerDicts ienv
+         in return ((fs, bs, cs, subs), genCode (Abst_Expr x innerExpr) dicts, unresolvedDicts)
 judgeExpr cenv ienv (App_Expr left right) qType = do
   lType <- newTypeVar
   rType <- newTypeVar
@@ -255,35 +257,53 @@ judgeExpr cenv ienv (App_Expr left right) qType = do
   let newEqn =
         procEqn
           (TVar_SType lType, Arrow_SType (TVar_SType rType) (TVar_SType qType))
-  return (procExist ([], []) [rType, lType] [] (newEqn : lEqns : [rEqns]), App_Expr lexpr rexpr, ldicts ++ rdicts)
+  case newEqn of
+    Left e -> throwError' e
+    Right eqn -> case procExist ([], []) [rType, lType] [] (eqn : lEqns : [rEqns]) of
+      Left e -> throwError' e
+      Right (fs, bs, cs, subs, dicts) ->
+        let (resolvedDicts, unresolvedDicts) = processDictionaries dicts (ldicts ++ rdicts) ienv
+         in return ((fs, bs, cs, subs), genCode (App_Expr lexpr rexpr) dicts, unresolvedDicts)
 judgeExpr cenv ienv (List_Expr Nil) qType = do
   aType <- newTypeVar
-  return
-    ( procExist
-        ([], [])
-        [aType]
-        []
-        [procEqn (TVar_SType qType, List_SType (TVar_SType aType))],
-      List_Expr Nil,
+  let newEqn = procEqn (TVar_SType qType, List_SType (TVar_SType aType))
+  case newEqn of
+    Left e -> throwError' e
+    Right eqn -> case procExist
+      ([], [])
+      [aType]
       []
-    )
+      [eqn] of
+      Left e -> throwError' e
+      Right (fs, bs, cs, subs, dicts) ->
+        return
+          ( (fs, bs, cs, subs),
+            List_Expr Nil,
+            []
+          )
 judgeExpr cenv ienv (List_Expr (Cons a as)) qType = do
   aType <- newTypeVar
-  return
-    ( procExist
-        ([], [])
-        [aType]
-        []
-        [ procEqn
-            ( TVar_SType qType,
-              Arrow_SType
-                (List_SType (TVar_SType aType))
-                (List_SType (TVar_SType aType))
-            )
-        ],
-      List_Expr (Cons a as),
+  let newEqn =
+        procEqn
+          ( TVar_SType qType,
+            Arrow_SType
+              (List_SType (TVar_SType aType))
+              (List_SType (TVar_SType aType))
+          )
+  case newEqn of
+    Left e -> throwError' e
+    Right eqn -> case procExist
+      ([], [])
+      [aType]
       []
-    )
+      [eqn] of
+      Left e -> throwError' e
+      Right (fs, bs, cs, subs, dicts) ->
+        return
+          ( (fs, bs, cs, subs),
+            List_Expr (Cons a as),
+            []
+          )
 judgeExpr cenv ienv (LCase_Expr t Nil t0 (Cons a as) t1) qType = do
   (counter, context) <- get
   tType <- newTypeVar
@@ -298,34 +318,34 @@ judgeExpr cenv ienv (LCase_Expr t Nil t0 (Cons a as) t1) qType = do
   (t1Eqns, t1expr, t1dicts) <- judgeExpr cenv ienv t1 t1Type
   setContext context
   let newEqns =
-        [ procEqn (TVar_SType tType, List_SType (TVar_SType xType)),
-          procEqn (TVar_SType t0Type, TVar_SType qType),
-          procEqn (TVar_SType aType, TVar_SType xType),
-          procEqn
-            ( TVar_SType asType,
-              List_SType (TVar_SType xType)
-            ),
-          procEqn (TVar_SType t1Type, TVar_SType qType)
-        ]
-  return
-    ( procExist
-        ([], [])
-        [xType, tType, aType, asType, t0Type, t1Type]
-        []
-        (newEqns ++ [tEqns] ++ [t0Eqns] ++ [t1Eqns]),
-      LCase_Expr texpr Nil t0expr (Cons a as) t1expr,
-      tdicts ++ t0dicts ++ t1dicts
-    )
-
--- test =
---   Dummy_Prog
---     [ Class_Dec
---         (UIdent "Eq")
---         (LIdent "a")
---         [ClassOp_Dec (LIdent "equal") (Arrow_SType (TVar_SType (LIdent "a")) (Arrow_SType (TVar_SType (LIdent "a")) Bool_SType))]
---     ]
---     []
---     [Ass_Expr (LIdent "f") (Abst_Expr (LIdent "x") (Abst_Expr (LIdent "y") (App_Expr (App_Expr (Var_Expr (LIdent "equal")) (Var_Expr (LIdent "x"))) (Var_Expr (LIdent "y")))))]
+        foldr
+          ( \e acc -> case e of
+              Left x -> Left x
+              Right y -> case acc of
+                Left x' -> Left x'
+                Right y' -> Right (y : y')
+          )
+          (Right [])
+          [ procEqn (TVar_SType tType, List_SType (TVar_SType xType)),
+            procEqn (TVar_SType t0Type, TVar_SType qType),
+            procEqn (TVar_SType aType, TVar_SType xType),
+            procEqn
+              ( TVar_SType asType,
+                List_SType (TVar_SType xType)
+              ),
+            procEqn (TVar_SType t1Type, TVar_SType qType)
+          ]
+  case newEqns of
+    Left e -> throwError' e
+    Right eqns -> case procExist
+      ([], [])
+      [xType, tType, aType, asType, t0Type, t1Type]
+      []
+      (eqns ++ [tEqns] ++ [t0Eqns] ++ [t1Eqns]) of
+      Left e -> throwError' e
+      Right (fs, bs, cs, subs, dicts) ->
+        let (resolvedDicts, unresolvedDicts) = processDictionaries dicts (tdicts ++ t0dicts ++ t1dicts) ienv
+         in return ((fs, bs, cs, subs), genCode (LCase_Expr texpr Nil t0expr (Cons a as) t1expr) dicts, unresolvedDicts)
 
 testWithInst :: Prog
 testWithInst =
@@ -353,8 +373,7 @@ testWithInst =
             )
         ]
     ]
-    [ 
-      -- Ass_Expr
+    [ -- Ass_Expr
       --   (LIdent "tail")
       --   ( Abst_Expr
       --       (LIdent "xs")
@@ -382,21 +401,3 @@ testWithInst =
             )
         )
     ]
-
--- insts :: [InstDec]
--- insts =
---   [ Inst_Dec_With_Constraint
---       (TypeConstraint (UIdent "Eq") (TVar_SType (LIdent "kkk")))
---       (UIdent "Eq")
---       (List_SType (TVar_SType (LIdent "kkk")))
---       [ ClassOp_Imp
---           (LIdent "equal")
---           ( Abst_Expr
---               (LIdent "xs")
---               ( Abst_Expr
---                   (LIdent "ys")
---                   (True_Expr (Dummy.Abs.True "True"))
---               )
---           )
---       ]
---   ]
