@@ -20,6 +20,8 @@ module Dummy.Par
   , pListClassOpImp
   , pList
   , pExpr
+  , pExpr2
+  , pExpr1
   , pTyC
   , pOvType
   , pListTyC
@@ -46,6 +48,8 @@ import Dummy.Lex
 %name pListClassOpImp ListClassOpImp
 %name pList List
 %name pExpr Expr
+%name pExpr2 Expr2
+%name pExpr1 Expr1
 %name pTyC TyC
 %name pOvType OvType
 %name pListTyC ListTyC
@@ -55,36 +59,38 @@ import Dummy.Lex
 %monad { Err } { (>>=) } { return }
 %tokentype {Token}
 %token
-  ','        { PT _ (TS _ 1)      }
-  '->'       { PT _ (TS _ 2)      }
-  ':'        { PT _ (TS _ 3)      }
-  ';'        { PT _ (TS _ 4)      }
-  '<'        { PT _ (TS _ 5)      }
-  '='        { PT _ (TS _ 6)      }
-  '=>'       { PT _ (TS _ 7)      }
-  '>'        { PT _ (TS _ 8)      }
-  'Bool'     { PT _ (TS _ 9)      }
-  '['        { PT _ (TS _ 10)     }
-  '[]'       { PT _ (TS _ 11)     }
-  '\\'       { PT _ (TS _ 12)     }
-  ']'        { PT _ (TS _ 13)     }
-  'case'     { PT _ (TS _ 14)     }
-  'class'    { PT _ (TS _ 15)     }
-  'instance' { PT _ (TS _ 16)     }
-  'of'       { PT _ (TS _ 17)     }
-  'where'    { PT _ (TS _ 18)     }
-  L_True     { PT _ (T_True $$)   }
-  L_False    { PT _ (T_False $$)  }
+  '('        { PT _ (TS _ 1)      }
+  ')'        { PT _ (TS _ 2)      }
+  ','        { PT _ (TS _ 3)      }
+  '->'       { PT _ (TS _ 4)      }
+  ':'        { PT _ (TS _ 5)      }
+  ';'        { PT _ (TS _ 6)      }
+  '<'        { PT _ (TS _ 7)      }
+  '='        { PT _ (TS _ 8)      }
+  '=>'       { PT _ (TS _ 9)      }
+  '>'        { PT _ (TS _ 10)     }
+  'Bool'     { PT _ (TS _ 11)     }
+  '['        { PT _ (TS _ 12)     }
+  '[]'       { PT _ (TS _ 13)     }
+  '\\'       { PT _ (TS _ 14)     }
+  ']'        { PT _ (TS _ 15)     }
+  'case'     { PT _ (TS _ 16)     }
+  'class'    { PT _ (TS _ 17)     }
+  'instance' { PT _ (TS _ 18)     }
+  'of'       { PT _ (TS _ 19)     }
+  'where'    { PT _ (TS _ 20)     }
+  L_DTrue    { PT _ (T_DTrue $$)  }
+  L_DFalse   { PT _ (T_DFalse $$) }
   L_UIdent   { PT _ (T_UIdent $$) }
   L_LIdent   { PT _ (T_LIdent $$) }
 
 %%
 
-True :: { Dummy.Abs.True }
-True  : L_True { Dummy.Abs.True $1 }
+DTrue :: { Dummy.Abs.DTrue }
+DTrue  : L_DTrue { Dummy.Abs.DTrue $1 }
 
-False :: { Dummy.Abs.False }
-False  : L_False { Dummy.Abs.False $1 }
+DFalse :: { Dummy.Abs.DFalse }
+DFalse  : L_DFalse { Dummy.Abs.DFalse $1 }
 
 UIdent :: { Dummy.Abs.UIdent }
 UIdent  : L_UIdent { Dummy.Abs.UIdent $1 }
@@ -139,8 +145,7 @@ ListClassOpImp
 
 List :: { Dummy.Abs.List }
 List
-  : '[]' { Dummy.Abs.Nil }
-  | LIdent ':' LIdent { Dummy.Abs.Cons $1 $3 }
+  : '[]' { Dummy.Abs.Nil } | Expr ':' Expr { Dummy.Abs.Cons $1 $3 }
 
 Expr :: { Dummy.Abs.Expr }
 Expr
@@ -150,8 +155,15 @@ Expr
   | Expr Expr { Dummy.Abs.App_Expr $1 $2 }
   | List { Dummy.Abs.List_Expr $1 }
   | 'case' Expr 'of' List '->' Expr ';' List '->' Expr { Dummy.Abs.LCase_Expr $2 $4 $6 $8 $10 }
-  | True { Dummy.Abs.True_Expr $1 }
-  | False { Dummy.Abs.False_Expr $1 }
+  | DTrue { Dummy.Abs.True_Expr $1 }
+  | DFalse { Dummy.Abs.False_Expr $1 }
+  | Expr1 { $1 }
+
+Expr2 :: { Dummy.Abs.Expr }
+Expr2 : '(' Expr ')' { $2 }
+
+Expr1 :: { Dummy.Abs.Expr }
+Expr1 : Expr2 { $1 }
 
 TyC :: { Dummy.Abs.TyC }
 TyC : UIdent SType { Dummy.Abs.TypeConstraint $1 $2 }

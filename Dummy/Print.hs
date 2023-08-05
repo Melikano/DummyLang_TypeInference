@@ -138,10 +138,10 @@ instance Print Integer where
 instance Print Double where
   prt _ x = doc (shows x)
 
-instance Print Dummy.Abs.True where
-  prt _ (Dummy.Abs.True i) = doc $ showString i
-instance Print Dummy.Abs.False where
-  prt _ (Dummy.Abs.False i) = doc $ showString i
+instance Print Dummy.Abs.DTrue where
+  prt _ (Dummy.Abs.DTrue i) = doc $ showString i
+instance Print Dummy.Abs.DFalse where
+  prt _ (Dummy.Abs.DFalse i) = doc $ showString i
 instance Print Dummy.Abs.UIdent where
   prt _ (Dummy.Abs.UIdent i) = doc $ showString i
 instance Print Dummy.Abs.LIdent where
@@ -193,7 +193,7 @@ instance Print [Dummy.Abs.ClassOpImp] where
 instance Print Dummy.Abs.List where
   prt i = \case
     Dummy.Abs.Nil -> prPrec i 0 (concatD [doc (showString "[]")])
-    Dummy.Abs.Cons lident1 lident2 -> prPrec i 0 (concatD [prt 0 lident1, doc (showString ":"), prt 0 lident2])
+    Dummy.Abs.Cons expr1 expr2 -> prPrec i 0 (concatD [prt 0 expr1, doc (showString ":"), prt 0 expr2])
 
 instance Print Dummy.Abs.Expr where
   prt i = \case
@@ -203,8 +203,8 @@ instance Print Dummy.Abs.Expr where
     Dummy.Abs.App_Expr expr1 expr2 -> prPrec i 0 (concatD [prt 0 expr1, prt 0 expr2])
     Dummy.Abs.List_Expr list -> prPrec i 0 (concatD [prt 0 list])
     Dummy.Abs.LCase_Expr expr1 list1 expr2 list2 expr3 -> prPrec i 0 (concatD [doc (showString "case"), prt 0 expr1, doc (showString "of"), prt 0 list1, doc (showString "->"), prt 0 expr2, doc (showString ";"), prt 0 list2, doc (showString "->"), prt 0 expr3])
-    Dummy.Abs.True_Expr true -> prPrec i 0 (concatD [prt 0 true])
-    Dummy.Abs.False_Expr false -> prPrec i 0 (concatD [prt 0 false])
+    Dummy.Abs.True_Expr dtrue -> prPrec i 0 (concatD [prt 0 dtrue])
+    Dummy.Abs.False_Expr dfalse -> prPrec i 0 (concatD [prt 0 dfalse])
 
 instance Print Dummy.Abs.TyC where
   prt i = \case

@@ -28,7 +28,7 @@ $u = [. \n]          -- universal: any character
 
 -- Symbols and non-identifier-like reserved words
 
-@rsyms = \; | \: | \= | \[ \] | \\ | \- \> | \< | \> | \= \> | \, | \[ | \]
+@rsyms = \; | \: | \= | \< | \> | \= \> | \[ \] | \- \> | \\ | \( | \) | \, | \[ | \]
 
 :-
 
@@ -39,13 +39,13 @@ $white+ ;
 @rsyms
     { tok (eitherResIdent TV) }
 
--- token True
+-- token DTrue
 T r u e
-    { tok (eitherResIdent T_True) }
+    { tok (eitherResIdent T_DTrue) }
 
--- token False
+-- token DFalse
 F a l s e
-    { tok (eitherResIdent T_False) }
+    { tok (eitherResIdent T_DFalse) }
 
 -- token UIdent
 $c (\_ | ($d | $l)) *
@@ -72,8 +72,8 @@ data Tok
   | TV !String                    -- ^ Identifier.
   | TD !String                    -- ^ Float literal.
   | TC !String                    -- ^ Character literal.
-  | T_True !String
-  | T_False !String
+  | T_DTrue !String
+  | T_DFalse !String
   | T_UIdent !String
   | T_LIdent !String
   deriving (Eq, Show, Ord)
@@ -138,8 +138,8 @@ tokenText t = case t of
   PT _ (TD s)   -> s
   PT _ (TC s)   -> s
   Err _         -> "#error"
-  PT _ (T_True s) -> s
-  PT _ (T_False s) -> s
+  PT _ (T_DTrue s) -> s
+  PT _ (T_DFalse s) -> s
   PT _ (T_UIdent s) -> s
   PT _ (T_LIdent s) -> s
 
@@ -168,13 +168,14 @@ eitherResIdent tv s = treeFind resWords
 -- | The keywords and symbols of the language organized as binary search tree.
 resWords :: BTree
 resWords =
-  b "[" 10
-    (b "<" 5
-       (b ":" 3 (b "->" 2 (b "," 1 N N) N) (b ";" 4 N N))
-       (b ">" 8 (b "=>" 7 (b "=" 6 N N) N) (b "Bool" 9 N N)))
-    (b "class" 15
-       (b "]" 13 (b "\\" 12 (b "[]" 11 N N) N) (b "case" 14 N N))
-       (b "of" 17 (b "instance" 16 N N) (b "where" 18 N N)))
+  b "Bool" 11
+    (b ";" 6
+       (b "," 3 (b ")" 2 (b "(" 1 N N) N) (b ":" 5 (b "->" 4 N N) N))
+       (b "=>" 9 (b "=" 8 (b "<" 7 N N) N) (b ">" 10 N N)))
+    (b "case" 16
+       (b "\\" 14 (b "[]" 13 (b "[" 12 N N) N) (b "]" 15 N N))
+       (b "of" 19
+          (b "instance" 18 (b "class" 17 N N) N) (b "where" 20 N N)))
   where
   b s n = B bs (TS bs n)
     where

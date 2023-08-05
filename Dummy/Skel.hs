@@ -15,13 +15,13 @@ type Result = Err String
 failure :: Show a => a -> Result
 failure x = Left $ "Undefined case: " ++ show x
 
-transTrue :: Dummy.Abs.True -> Result
-transTrue x = case x of
-  Dummy.Abs.True string -> failure x
+transDTrue :: Dummy.Abs.DTrue -> Result
+transDTrue x = case x of
+  Dummy.Abs.DTrue string -> failure x
 
-transFalse :: Dummy.Abs.False -> Result
-transFalse x = case x of
-  Dummy.Abs.False string -> failure x
+transDFalse :: Dummy.Abs.DFalse -> Result
+transDFalse x = case x of
+  Dummy.Abs.DFalse string -> failure x
 
 transUIdent :: Dummy.Abs.UIdent -> Result
 transUIdent x = case x of
@@ -55,7 +55,7 @@ transInstDec x = case x of
 transList :: Dummy.Abs.List -> Result
 transList x = case x of
   Dummy.Abs.Nil -> failure x
-  Dummy.Abs.Cons lident1 lident2 -> failure x
+  Dummy.Abs.Cons expr1 expr2 -> failure x
 
 transExpr :: Dummy.Abs.Expr -> Result
 transExpr x = case x of
@@ -65,8 +65,8 @@ transExpr x = case x of
   Dummy.Abs.App_Expr expr1 expr2 -> failure x
   Dummy.Abs.List_Expr list -> failure x
   Dummy.Abs.LCase_Expr expr1 list1 expr2 list2 expr3 -> failure x
-  Dummy.Abs.True_Expr true -> failure x
-  Dummy.Abs.False_Expr false -> failure x
+  Dummy.Abs.True_Expr dtrue -> failure x
+  Dummy.Abs.False_Expr dfalse -> failure x
 
 transTyC :: Dummy.Abs.TyC -> Result
 transTyC x = case x of

@@ -1,5 +1,5 @@
-token True {"True"};
-token False {"False"};
+token DTrue {"True"};
+token DFalse {"False"};
 token UIdent (upper (letter | digit | '_')*) ;
 token LIdent (lower (letter | digit | '_')*);
 
@@ -21,7 +21,8 @@ separator ClassOpDec "";
 separator ClassOpImp "";
 
 Nil. List ::= "[]";
-Cons. List ::= LIdent ":" LIdent;
+Cons. List ::= Expr ":" Expr;
+
 
 Ass_Expr. Expr ::= LIdent "=" Expr;
 Abst_Expr. Expr ::= "\\"LIdent "->" Expr;
@@ -29,10 +30,12 @@ Var_Expr. Expr ::= LIdent;
 App_Expr. Expr ::= Expr Expr;
 List_Expr. Expr ::= List;
 LCase_Expr. Expr ::= "case" Expr "of" List "->" Expr ";" List "->" Expr;
-True_Expr. Expr ::= True;
-False_Expr. Expr ::= False;
+True_Expr. Expr ::= DTrue;
+False_Expr. Expr ::= DFalse;
 
-
+_. Expr2 ::= "(" Expr ")" ;
+_. Expr1 ::= Expr2 ;
+_. Expr ::= Expr1 ;
 
 TypeConstraint. TyC ::= UIdent SType;
 OverLoadedType. OvType ::= "<" [TyC] ">" "=>" SType;

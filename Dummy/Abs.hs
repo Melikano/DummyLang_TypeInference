@@ -27,7 +27,7 @@ data InstDec
     | Inst_Dec_With_Constraint TyC UIdent SType [ClassOpImp]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-data List = Nil | Cons LIdent LIdent
+data List = Nil | Cons Expr Expr
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data Expr
@@ -37,8 +37,8 @@ data Expr
     | App_Expr Expr Expr
     | List_Expr List
     | LCase_Expr Expr List Expr List Expr
-    | True_Expr True
-    | False_Expr False
+    | True_Expr DTrue
+    | False_Expr DFalse
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data TyC = TypeConstraint UIdent SType
@@ -58,10 +58,10 @@ data SType
 data DType = DType_OvType OvType | DType_SType SType
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-newtype True = True String
+newtype DTrue = DTrue String
   deriving (C.Eq, C.Ord, C.Show, C.Read, Data.String.IsString)
 
-newtype False = False String
+newtype DFalse = DFalse String
   deriving (C.Eq, C.Ord, C.Show, C.Read, Data.String.IsString)
 
 newtype UIdent = UIdent String

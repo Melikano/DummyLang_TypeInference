@@ -1,12 +1,13 @@
 class Eq a where equal : a -> a -> Bool ;
 
 instance <Eq a> => Eq [a] where
-    equal = \xs -> \ys -> True ;
-
-
-tail = \xs -> case xs of
-    [] -> [] ;
-    a:as -> as
+    equal = \xs -> \ys -> (and ((equal (head xs)) (head ys))) ((equal (tail xs)) (tail ys))
 ;
 
-f = \x -> \y -> equal x tail y
+instance Eq Bool where
+    equal = \x -> \y -> True
+;
+
+
+
+f = (equal (True:[]):[]) ((False:[]):[]) 

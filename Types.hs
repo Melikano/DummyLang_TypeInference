@@ -1,19 +1,21 @@
 module Types where
+
+import Debug.Trace
 import Dummy.Abs
 import Lib.Monads
 
+traceMonad :: (Show a, Monad m) => a -> m a
+traceMonad x = trace ("test: " ++ show x) (return x)
+
 type ExprInferer a = StateT (Int, Context) (Either String) a
 
-type Context = [(LIdent, LIdent)]
+type Context = [(LIdent, SType)]
 
 type Sub = (LIdent, SType)
 
 type TyRel = ([(SType, TyC)], [(SType, UIdent)])
 
-data Dictionary = SimpDict [Expr] | OvDict (Dictionary -> [Expr])
-instance Show Dictionary where
-    show (SimpDict exprs) = "<" ++ foldr (\e acc -> show e ++ ", " ++ acc ) "" exprs ++ ">"
-    show (OvDict f) = "ovdict" 
+data Dictionary = SimpDict [Expr] | OvDict String [Expr] deriving (Show)
 
 type IEnv = [(String, Dictionary)]
 
@@ -25,4 +27,3 @@ data TypeEqns = TypeExist [LIdent] [TyC] [TypeEqns] | TypeEqn (SType, SType)
 type SolvedEqn = ([LIdent], [LIdent], [(SType, UIdent)], [Sub])
 
 type CEnv = [(UIdent, [TyC], [(LIdent, SType)])]
-

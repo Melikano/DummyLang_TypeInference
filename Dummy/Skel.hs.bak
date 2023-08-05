@@ -15,13 +15,13 @@ type Result = Err String
 failure :: Show a => a -> Result
 failure x = Left $ "Undefined case: " ++ show x
 
-transTrue :: Dummy.Abs.True -> Result
-transTrue x = case x of
-  Dummy.Abs.True string -> failure x
+transDTrue :: Dummy.Abs.DTrue -> Result
+transDTrue x = case x of
+  Dummy.Abs.DTrue string -> failure x
 
-transFalse :: Dummy.Abs.False -> Result
-transFalse x = case x of
-  Dummy.Abs.False string -> failure x
+transDFalse :: Dummy.Abs.DFalse -> Result
+transDFalse x = case x of
+  Dummy.Abs.DFalse string -> failure x
 
 transUIdent :: Dummy.Abs.UIdent -> Result
 transUIdent x = case x of
@@ -49,12 +49,13 @@ transClassDec x = case x of
 
 transInstDec :: Dummy.Abs.InstDec -> Result
 transInstDec x = case x of
-  Dummy.Abs.Inst_Dec c uident stype classopimps -> failure x
+  Dummy.Abs.Inst_Dec uident stype classopimps -> failure x
+  Dummy.Abs.Inst_Dec_With_Constraint tyc uident stype classopimps -> failure x
 
 transList :: Dummy.Abs.List -> Result
 transList x = case x of
   Dummy.Abs.Nil -> failure x
-  Dummy.Abs.Cons lident1 lident2 -> failure x
+  Dummy.Abs.Cons expr list -> failure x
 
 transExpr :: Dummy.Abs.Expr -> Result
 transExpr x = case x of
@@ -64,12 +65,8 @@ transExpr x = case x of
   Dummy.Abs.App_Expr expr1 expr2 -> failure x
   Dummy.Abs.List_Expr list -> failure x
   Dummy.Abs.LCase_Expr expr1 list1 expr2 list2 expr3 -> failure x
-  Dummy.Abs.True_Expr true -> failure x
-  Dummy.Abs.False_Expr false -> failure x
-
-transC :: Dummy.Abs.C -> Result
-transC x = case x of
-  Dummy.Abs.Constraints tycs -> failure x
+  Dummy.Abs.True_Expr dtrue -> failure x
+  Dummy.Abs.False_Expr dfalse -> failure x
 
 transTyC :: Dummy.Abs.TyC -> Result
 transTyC x = case x of
@@ -77,7 +74,7 @@ transTyC x = case x of
 
 transOvType :: Dummy.Abs.OvType -> Result
 transOvType x = case x of
-  Dummy.Abs.OverLoadedType c stype -> failure x
+  Dummy.Abs.OverLoadedType tycs stype -> failure x
 
 transSType :: Dummy.Abs.SType -> Result
 transSType x = case x of
