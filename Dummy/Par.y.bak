@@ -109,7 +109,10 @@ ListInstDec
   | InstDec ';' ListInstDec { (:) $1 $3 }
 
 ListExpr :: { [Dummy.Abs.Expr] }
-ListExpr : {- empty -} { [] } | Expr ListExpr { (:) $1 $2 }
+ListExpr
+  : {- empty -} { [] }
+  | Expr { (:[]) $1 }
+  | Expr ';' ListExpr { (:) $1 $3 }
 
 ClassOpDec :: { Dummy.Abs.ClassOpDec }
 ClassOpDec : LIdent ':' SType { Dummy.Abs.ClassOp_Dec $1 $3 }

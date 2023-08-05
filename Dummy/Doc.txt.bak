@@ -58,7 +58,8 @@ All other symbols are terminals.
   |  |  **|**  | //InstDec//
   |  |  **|**  | //InstDec// ``;`` //[InstDec]//
   | //[Expr]// | -> | **eps**
-  |  |  **|**  | //Expr// //[Expr]//
+  |  |  **|**  | //Expr//
+  |  |  **|**  | //Expr// ``;`` //[Expr]//
   | //ClassOpDec// | -> | //LIdent// ``:`` //SType//
   | //ClassOpImp// | -> | //LIdent// ``=`` //Expr//
   | //ClassDec// | -> | ``class`` //UIdent// //LIdent// ``where`` //[ClassOpDec]//

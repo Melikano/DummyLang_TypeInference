@@ -3,32 +3,33 @@ module TypeInference where
 import Dummy.Abs
 import Dummy.Print
 import Lib.Monads
+import Types
 
 throwError' :: String -> StateT s (Either String) a
 throwError' error = lift (Left error)
 
-type Judger a = StateT (Int, Context, Env) (Either String) a
+type Judger a = StateT (Int, Context) (Either String) a
 
-type Context = [(LIdent, LIdent)]
+type Context = [(String, String)]
 
-type Env = [(LIdent, (LIdent, TypeEqns))]
+type Env = [(String, (String, TypeEqns))]
 
-type Sub = (LIdent, SType)
+type Sub = (String, SType)
 
-type TyRel = ([(SType, TyC)], [(SType, UIdent)])
+type TyRel = ([(SType, TyC)], [(SType, String)])
 
 -- data type for type equations:
 -- they can either be type existence with list of bound type vars and list of type equations or type equality between two type terms
-data TypeEqns = TypeExist [LIdent] [TyC] [TypeEqns] | TypeEqn (SType, SType)
+data TypeEqns = TypeExist [String] [TyC] [TypeEqns] | TypeEqn (SType, SType)
   deriving (Show)
 
-type SolvedEqn = ([LIdent], [LIdent], [(SType, UIdent)], [Sub])
+type SolvedEqn = ([String], [String], [(SType, String)], [Sub])
 
 -- fold function for typeEqn type
 -- for TypeEqn constructor -> just apply g type equality
 -- for TypeExist constructor -> apply f on list of bound variables and map fold on inner list of type eqns
 foldTypeEqns ::
-  ([LIdent] -> [TyC] -> [b] -> b) -> ((SType, SType) -> b) -> TypeEqns -> b
+  ([String] -> [TyC] -> [b] -> b) -> ((SType, SType) -> b) -> TypeEqns -> b
 foldTypeEqns f g (TypeEqn eq) = g eq
 foldTypeEqns f g (TypeExist l cs eqs) = f l cs (map (foldTypeEqns f g) eqs)
 
@@ -39,7 +40,7 @@ foldTypeEqns f g (TypeExist l cs eqs) = f l cs (map (foldTypeEqns f g) eqs)
 -- if there is no substitutions for a bound variable then it returns it as the list of not-substituted vars
 -- so they can be passed up in the main algorithm
 restrictedLinearize ::
-  [LIdent] -> [LIdent] -> [(SType, UIdent)] -> TyRel -> [Sub] -> Either String ([LIdent], [(SType, UIdent)], [Sub])
+  [String] -> [String] -> [(SType, String)] -> TyRel -> [Sub] -> Either String ([String], [(SType, String)], [Sub])
 restrictedLinearize [] rbs cs tyrel subs = return (rbs, cs, subs)
 restrictedLinearize (b : bs) rbs cs tyrel subs = do
   case lookup b subs of
@@ -53,7 +54,7 @@ restrictedLinearize (b : bs) rbs cs tyrel subs = do
           let reducedConstraints = applyTypeRels tyrel css
           restrictedLinearize bs rbs reducedConstraints tyrel cSubs
 
-replace :: (SType, UIdent) -> (SType, UIdent) -> [(SType, UIdent)] -> [(SType, UIdent)]
+replace :: (SType, String) -> (SType, String) -> [(SType, String)] -> [(SType, String)]
 replace a1 a2 as = a2 : filter (/= a1) as
 
 myEq :: SType -> SType -> Bool
@@ -81,18 +82,18 @@ getAllEqns = foldr allEqns (Right ([], [], [], []))
 unique [] = []
 unique (x : xs) = if x `elem` xs then unique xs else x : (unique xs)
 
--- removeRedundants :: [Sub] -> [(SType, UIdent)] -> [(SType, UIdent)]
+-- removeRedundants :: [Sub] -> [(SType, String)] -> [(SType, String)]
 -- removeRedundants subs = filter
 
 lookupSType :: SType -> [(SType, a)] -> Maybe a
 lookupSType st [] = Nothing
 lookupSType st ((s, a) : ss) | myEq st s = Just a | otherwise = lookupSType st ss
 
-replaceTVar :: SType -> LIdent -> SType
+replaceTVar :: SType -> String -> SType
 replaceTVar (TVar_SType x) y = TVar_SType y
 replaceTVar x _ = x
 
-applyTypeRels :: TyRel -> [(SType, UIdent)] -> [(SType, UIdent)]
+applyTypeRels :: TyRel -> [(SType, String)] -> [(SType, String)]
 applyTypeRels (sc, sl) constraints =
   map
     ( \(s, u) -> case lookupSType s sc of
@@ -118,10 +119,10 @@ solveEquations tyrel eqns = foldTypeEqns (procExist tyrel) procEqn eqns
   where
     procExist ::
       TyRel ->
-      [LIdent] ->
+      [String] ->
       [TyC] ->
       [Either String SolvedEqn] ->
-      Either String ([LIdent], [LIdent], [(SType, UIdent)], [Sub])
+      Either String ([String], [String], [(SType, String)], [Sub])
 
     procExist tyrel bounds constraints eqns = do
       let parsedConstraints = map (\(TypeConstraint u l) -> (l, u)) constraints
@@ -151,7 +152,7 @@ solveEquations tyrel eqns = foldTypeEqns (procExist tyrel) procEqn eqns
       return (vars lt1 ++ vars lt2, [], [], subs)
 
 -- function to get all variables of a lambda type term
-vars :: SType -> [LIdent]
+vars :: SType -> [String]
 vars (TVar_SType a) = [a]
 vars (Arrow_SType l r) = vars l ++ vars r
 vars (List_SType a) = vars a
@@ -235,51 +236,51 @@ unify eq = do
 -- then solve the equations to get list of free vars, list of bound vars and list of subs
 -- linearize free vars and remaining subs to empty all frees
 -- the sub for Q (which we passed as the total type) is the answer of type inference
-typeInference :: Prog -> Either String DType
-typeInference (Dummy_Prog classDecs instanceDecs exps) = do
-  let Class_Dec name tyVar ops = head classDecs
-  let env = judgeClassDec ops 0 name tyVar
-  let tyrel = judgeInstDec instanceDecs
-  -- return tyrel
-  result <-
-    evalStateT
-      (judgeExpr (head exps) (LIdent "Q"))
-      ( 0,
-        [],
-        ( LIdent "tail",
-          ( LIdent "TE",
-            TypeExist
-              [LIdent "TEE"]
-              []
-              [ TypeEqn
-                  ( TVar_SType (LIdent "TE"),
-                    Arrow_SType (List_SType (TVar_SType (LIdent "TEE"))) (List_SType (TVar_SType (LIdent "TEE")))
-                  )
-              ]
-          )
-        )
-          : env
-      )
-  (f, b, cs, subs) <- solveEquations tyrel result
-  -- (finalConstraints, finalSubs) <- emptyFrees (filter (/= LIdent "Q") f) b cs subs
-  case lookup "Q" (map (\(LIdent x, s) -> (x, s)) subs) of
-    Nothing -> Right (DType_SType (TVar_SType (LIdent "T0")))
-    Just s -> case cs of
-      [] -> Right (DType_SType s)
-      cs -> Right (DType_OvType (OverLoadedType (map (\(l, u) -> TypeConstraint u l) cs) s))
+-- typeInference :: Prog -> Either String DType
+-- typeInference (Dummy_Prog classDecs instanceDecs exps) = do
+--   let Class_Dec name tyVar ops = head classDecs
+--   let env = judgeClassDec ops 0 name tyVar
+--   let tyrel = judgeInstDec instanceDecs
+--   -- return tyrel
+--   result <-
+--     evalStateT
+--       (judgeExpr (head exps) (LIdent "Q"))
+--       ( 0,
+--         [],
+--         (  "tail",
+--           (  "TE",
+--             TypeExist
+--               [ "TEE"]
+--               []
+--               [ TypeEqn
+--                   ( TVar_SType ( "TE"),
+--                     Arrow_SType (List_SType (TVar_SType (LIdent "TEE"))) (List_SType (TVar_SType (LIdent "TEE")))
+--                   )
+--               ]
+--           )
+--         )
+--           : env
+--       )
+--   (f, b, cs, subs) <- solveEquations tyrel result
+--   -- (finalConstraints, finalSubs) <- emptyFrees (filter (/= LIdent "Q") f) b cs subs
+--   case lookup "Q" (map (\(x, s) -> (x, s)) subs) of
+--     Nothing -> Right (DType_SType (TVar_SType ("T0")))
+--     Just s -> case cs of
+--       [] -> Right (DType_SType s)
+--       cs -> Right (DType_OvType (OverLoadedType (map (\(l, u) -> TypeConstraint u l) cs) s))
 
 -- call restricted linearize on free vars to get rid of them
--- emptyFrees :: [LIdent] -> [LIdent] -> [(SType, UIdent)] -> [Sub] -> Either String ([(SType, UIdent)], [Sub])
+-- emptyFrees :: [LIdent] -> [LIdent] -> [(SType, String)] -> [Sub] -> Either String ([(SType, String)], [Sub])
 -- emptyFrees [] bs cs subs = return (cs, subs)
 -- emptyFrees frees bs cs subs = do
 --   (f, css, ss) <- restrictedLinearize frees bs cs subs
 --   return (css, ss)
 
-mapSnd :: (b -> b') -> (a, b, c) -> (a, b', c)
-mapSnd f (x, y, z) = (x, f y, z)
+mapSnd :: (b -> b') -> (a, b) -> (a, b')
+mapSnd f (x, y) = (x, f y)
 
-mapFst :: (a -> a') -> (a, b, c) -> (a', b, c)
-mapFst f (x, y, z) = (f x, y, z)
+mapFst :: (a -> a') -> (a, b) -> (a', b)
+mapFst f (x, y) = (f x, y)
 
 -- function that sets counter in a state (Ryan's Tutorial notes)
 setCounter :: Int -> Judger ()
@@ -292,11 +293,11 @@ setContext context = do
   modify (mapSnd (const context))
 
 -- function that generates a new type var using the counter (Ryan's Tutorial notes)
-newTypeVar :: Judger LIdent
+newTypeVar :: Judger String
 newTypeVar = do
-  (counter, _, _) <- get
+  (counter, _) <- get
   setCounter (counter + 1)
-  return (LIdent ("T" ++ show counter))
+  return ("T" ++ show counter)
 
 -- a function for running type judgement
 -- runJudge :: Prog -> Either String SolvedEqn
@@ -311,10 +312,10 @@ newTypeVar = do
 -- (finalConstraints, finalSubs) <- emptyFrees (filter (/= LIdent "Q") f) b c subs
 -- return finalSubs
 
-judgeClassDec :: [ClassOpDec] -> Int -> UIdent -> LIdent -> Env
+judgeClassDec :: [ClassOpDec] -> Int -> String -> String -> Env
 judgeClassDec [] _ _ _ = []
 judgeClassDec ((ClassOp_Dec opName opType) : ops) i className classTVar =
-  (opName, (LIdent "TT", TypeExist [classTVar] [TypeConstraint className (TVar_SType classTVar)] [TypeEqn (TVar_SType (LIdent "TT"), opType)])) : judgeClassDec ops (i + 1) className classTVar
+  (opName, ("TT", TypeExist [classTVar] [TypeConstraint className (TVar_SType classTVar)] [TypeEqn (TVar_SType ("TT"), opType)])) : judgeClassDec ops (i + 1) className classTVar
 
 judgeInstDec :: [InstDec] -> TyRel
 judgeInstDec = foldr f ([], [])
@@ -322,48 +323,62 @@ judgeInstDec = foldr f ([], [])
     f (Inst_Dec u s ops) (cacc, acc) = (cacc, (s, u) : acc)
     f (Inst_Dec_With_Constraint tyc u s ops) (cacc, acc) = ((s, tyc) : cacc, acc)
 
--- judge based on the judgments specified in the fixtypes.pdf
--- I really just translated them into haskell :)) I didn't do any important thing
-judgeExpr :: Expr -> LIdent -> Judger TypeEqns
--- if var, look up for its type in the context, if not found it means that no it is free
--- otherwise the type var should be equal to the type found in context
-judgeExpr (Ass_Expr x t) qType = judgeExpr t qType
-judgeExpr (Var_Expr x) qType = do
-  (_, context, global) <- get
-  case lookup x context of
-    Nothing -> case lookup x global of
-      Nothing -> throwError' ("free" ++ show x)
-      Just (p, eqn) -> return (TypeExist [p] [] [TypeEqn (TVar_SType qType, TVar_SType p), eqn])
-    Just p -> return (TypeEqn (TVar_SType qType, TVar_SType p))
-judgeExpr (Abst_Expr x t) qType = do
-  (_, context, _) <- get
+findMethod :: ClassEnv -> String -> Either String (Maybe ([TyC], SType))
+findMethod (Class {className, typeConstraints, methods} : cs) method =
+  case filter (\(cm, _) -> cm == method) methods of
+    [(cm, tm)] -> Right (Just (typeConstraints, tm))
+    [] -> Right Nothing
+    _ -> Left $ "redundant class method " ++ method
+
+judgeExpr :: ClassEnv -> Expr -> String -> Judger (TypeEqns, [(Expr, SType)])
+judgeExpr classEnv (Ass_Expr x t) qType = judgeExpr classEnv t qType
+judgeExpr classEnv (Var_Expr x) qType = do
+  case findMethod classEnv x of
+    Left err -> throwError' err
+    Right m -> case m of
+      Nothing -> do
+        (_, context) <- get
+        case lookup x context of
+          Nothing -> throwError' ("free " ++ show x)
+          Just p -> return (TypeEqn (TVar_SType qType, TVar_SType p), [])
+      Just (constraints, mtype) ->
+        return
+          ( TypeExist
+              (vars mtype)
+              constraints
+              [TypeEqn (TVar_SType qType, mtype)],
+            [(Var_Expr x, TVar_SType qType)]
+          )
+judgeExpr classEnv (Abst_Expr x t) qType = do
+  (_, context) <- get
   xType <- newTypeVar
   tType <- newTypeVar
   setContext $ (x, xType) : context
-  tEqns <- judgeExpr t tType
+  (tEqns, tOvExprs) <- judgeExpr classEnv t tType
   setContext context
   let newEqn =
         TypeEqn
           (TVar_SType qType, Arrow_SType (TVar_SType xType) (TVar_SType tType))
-  return (TypeExist [xType, tType] [] (newEqn : [tEqns]))
-judgeExpr (App_Expr left right) qType = do
+  return (TypeExist [xType, tType] [] (newEqn : [tEqns]), tOvExprs)
+judgeExpr classEnv (App_Expr left right) qType = do
   lType <- newTypeVar
   rType <- newTypeVar
-  lEqns <- judgeExpr left lType
-  rEqns <- judgeExpr right rType
+  (lEqns, lOvExprs) <- judgeExpr classEnv left lType
+  (rEqns, rOvExprs) <- judgeExpr classEnv right rType
   let newEqn =
         TypeEqn
           (TVar_SType lType, Arrow_SType (TVar_SType rType) (TVar_SType qType))
-  return (TypeExist [rType, lType] [] (newEqn : lEqns : [rEqns]))
-judgeExpr (List_Expr Nil) qType = do
+  return (TypeExist [rType, lType] [] (newEqn : lEqns : [rEqns]), lOvExprs ++ rOvExprs)
+judgeExpr classEnv (List_Expr Nil) qType = do
   aType <- newTypeVar
   return
     ( TypeExist
         [aType]
         []
-        [TypeEqn (TVar_SType qType, List_SType (TVar_SType aType))]
+        [TypeEqn (TVar_SType qType, List_SType (TVar_SType aType))],
+      []
     )
-judgeExpr (List_Expr (Cons a as)) qType = do
+judgeExpr classEnv (List_Expr (Cons a as)) qType = do
   aType <- newTypeVar
   return
     ( TypeExist
@@ -375,20 +390,21 @@ judgeExpr (List_Expr (Cons a as)) qType = do
                 (List_SType (TVar_SType aType))
                 (List_SType (TVar_SType aType))
             )
-        ]
+        ],
+      []
     )
-judgeExpr (LCase_Expr t Nil t0 (Cons a as) t1) qType = do
-  (counter, context, _) <- get
+judgeExpr classEnv (LCase_Expr t Nil t0 (Cons a as) t1) qType = do
+  (counter, context) <- get
   tType <- newTypeVar
   t0Type <- newTypeVar
   aType <- newTypeVar
   asType <- newTypeVar
   t1Type <- newTypeVar
   xType <- newTypeVar
-  tEqns <- judgeExpr t tType
-  t0Eqns <- judgeExpr t0 t0Type
+  (tEqns, tOvExprs) <- judgeExpr classEnv t tType
+  (t0Eqns, t0OvExprs) <- judgeExpr classEnv t0 t0Type
   setContext ((a, aType) : (as, asType) : context)
-  t1Eqns <- judgeExpr t1 t1Type
+  (t1Eqns, t1OvExprs) <- judgeExpr classEnv t1 t1Type
   setContext context
   let newEqns =
         [ TypeEqn (TVar_SType tType, List_SType (TVar_SType xType)),
@@ -404,58 +420,6 @@ judgeExpr (LCase_Expr t Nil t0 (Cons a as) t1) qType = do
     ( TypeExist
         [xType, tType, aType, asType, t0Type, t1Type]
         []
-        (newEqns ++ [tEqns] ++ [t0Eqns] ++ [t1Eqns])
+        (newEqns ++ [tEqns] ++ [t0Eqns] ++ [t1Eqns]),
+      tOvExprs ++ t0OvExprs ++ t1OvExprs
     )
-
-test =
-  Dummy_Prog
-    [ Class_Dec
-        (UIdent "Eq")
-        (LIdent "a")
-        [ClassOp_Dec (LIdent "equal") (Arrow_SType (TVar_SType (LIdent "a")) (Arrow_SType (TVar_SType (LIdent "a")) Bool_SType))]
-    ]
-    []
-    [Ass_Expr (LIdent "f") (Abst_Expr (LIdent "x") (Abst_Expr (LIdent "y") (App_Expr (App_Expr (Var_Expr (LIdent "equal")) (Var_Expr (LIdent "x"))) (Var_Expr (LIdent "y")))))]
-
-testWithInst :: Prog
-testWithInst =
-  Dummy_Prog
-    [ Class_Dec
-        (UIdent "Eq")
-        (LIdent "a")
-        [ ClassOp_Dec
-            (LIdent "equal")
-            (Arrow_SType (TVar_SType (LIdent "a")) (Arrow_SType (TVar_SType (LIdent "a")) Bool_SType))
-        ]
-    ]
-    [ Inst_Dec_With_Constraint
-        (TypeConstraint (UIdent "Eq") (TVar_SType (LIdent "kkk")))
-        (UIdent "Eq")
-        (List_SType (TVar_SType (LIdent "kkk")))
-        [ ClassOp_Imp
-            (LIdent "equal")
-            ( Abst_Expr
-                (LIdent "xs")
-                ( Abst_Expr
-                    (LIdent "ys")
-                    (True_Expr (Dummy.Abs.True "True"))
-                )
-            )
-        ]
-    ]
-    [ Ass_Expr
-        (LIdent "f")
-        ( Abst_Expr
-            (LIdent "x")
-            ( Abst_Expr
-                (LIdent "y")
-                ( App_Expr
-                    ( App_Expr
-                        (Var_Expr (LIdent "equal"))
-                        (Var_Expr (LIdent "x"))
-                    )
-                    (App_Expr (Var_Expr (LIdent "tail")) (Var_Expr (LIdent "y")))
-                )
-            )
-        )
-    ]

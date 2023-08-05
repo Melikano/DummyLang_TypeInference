@@ -162,7 +162,8 @@ instance Print [Dummy.Abs.InstDec] where
 
 instance Print [Dummy.Abs.Expr] where
   prt _ [] = concatD []
-  prt _ (x:xs) = concatD [prt 0 x, doc (showString "\n"), prt 0 xs]
+  prt _ [x] = concatD [prt 0 x]
+  prt _ (x:xs) = concatD [prt 0 x, doc (showString ";"), prt 0 xs]
 
 instance Print Dummy.Abs.ClassOpDec where
   prt i = \case

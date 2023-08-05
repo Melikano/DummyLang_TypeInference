@@ -23,8 +23,8 @@ data ClassDec = Class_Dec UIdent LIdent [ClassOpDec]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data InstDec
-    = Inst_Dec UIdent LIdent [ClassOpImp]
-    | Inst_Dec_With_Constraint TyC UIdent LIdent [ClassOpImp]
+    = Inst_Dec UIdent SType [ClassOpImp]
+    | Inst_Dec_With_Constraint TyC UIdent SType [ClassOpImp]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data List = Nil | Cons LIdent LIdent

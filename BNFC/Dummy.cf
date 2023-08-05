@@ -1,7 +1,5 @@
 token True {"True"};
 token False {"False"};
-token UIdent (upper (letter | digit | '_')*) ;
-token LIdent (lower (letter | digit | '_')*);
 
 Dummy_Prog. Prog ::= [ClassDec] [InstDec] [Expr];
 
@@ -9,23 +7,23 @@ separator ClassDec ";";
 separator InstDec ";";
 separator Expr ";";
 
-ClassOp_Dec. ClassOpDec ::= LIdent ":" SType;
-ClassOp_Imp. ClassOpImp ::= LIdent "=" Expr;
+ClassOp_Dec. ClassOpDec ::= String ":" SType;
+ClassOp_Imp. ClassOpImp ::= String "=" Expr;
 
-Class_Dec. ClassDec ::= "class" UIdent LIdent "where" [ClassOpDec];
-Inst_Dec. InstDec ::= "instance" UIdent SType "where" [ClassOpImp];
-Inst_Dec_With_Constraint. InstDec ::= "instance <" TyC "> => " UIdent SType "where" [ClassOpImp];
+Class_Dec. ClassDec ::= "class" String String "where" [ClassOpDec];
+Inst_Dec. InstDec ::= "instance" String SType "where" [ClassOpImp];
+Inst_Dec_With_Constraint. InstDec ::= "instance <" TyC "> => " String SType "where" [ClassOpImp];
 
 
 separator ClassOpDec "";
 separator ClassOpImp "";
 
 Nil. List ::= "[]";
-Cons. List ::= LIdent ":" LIdent;
+Cons. List ::= String ":" String;
 
-Ass_Expr. Expr ::= LIdent "=" Expr;
-Abst_Expr. Expr ::= "\\"LIdent "->" Expr;
-Var_Expr. Expr ::= LIdent;
+Ass_Expr. Expr ::= String "=" Expr;
+Abst_Expr. Expr ::= "\\"String "->" Expr;
+Var_Expr. Expr ::= String;
 App_Expr. Expr ::= Expr Expr;
 List_Expr. Expr ::= List;
 LCase_Expr. Expr ::= "case" Expr "of" List "->" Expr ";" List "->" Expr;
@@ -34,11 +32,11 @@ False_Expr. Expr ::= False;
 
 
 
-TypeConstraint. TyC ::= UIdent SType;
+TypeConstraint. TyC ::= String SType;
 OverLoadedType. OvType ::= "<" [TyC] ">" "=>" SType;
 separator TyC ",";
-TVar_SType. SType ::= LIdent;
-TCons_SType.  SType ::= UIdent LIdent;
+TVar_SType. SType ::= String;
+TCons_SType.  SType ::= String String;
 Bool_SType. SType ::= "Bool"; 
 Arrow_SType. SType ::= SType "->" SType;
 List_SType. SType ::= "[" SType "]";

@@ -142,10 +142,6 @@ instance Print Dummy.Abs.True where
   prt _ (Dummy.Abs.True i) = doc $ showString i
 instance Print Dummy.Abs.False where
   prt _ (Dummy.Abs.False i) = doc $ showString i
-instance Print Dummy.Abs.UIdent where
-  prt _ (Dummy.Abs.UIdent i) = doc $ showString i
-instance Print Dummy.Abs.LIdent where
-  prt _ (Dummy.Abs.LIdent i) = doc $ showString i
 instance Print Dummy.Abs.Prog where
   prt i = \case
     Dummy.Abs.Dummy_Prog classdecs instdecs exprs -> prPrec i 0 (concatD [prt 0 classdecs, prt 0 instdecs, prt 0 exprs])
@@ -167,20 +163,20 @@ instance Print [Dummy.Abs.Expr] where
 
 instance Print Dummy.Abs.ClassOpDec where
   prt i = \case
-    Dummy.Abs.ClassOp_Dec lident stype -> prPrec i 0 (concatD [prt 0 lident, doc (showString ":"), prt 0 stype])
+    Dummy.Abs.ClassOp_Dec str stype -> prPrec i 0 (concatD [printString str, doc (showString ":"), prt 0 stype])
 
 instance Print Dummy.Abs.ClassOpImp where
   prt i = \case
-    Dummy.Abs.ClassOp_Imp lident expr -> prPrec i 0 (concatD [prt 0 lident, doc (showString "="), prt 0 expr])
+    Dummy.Abs.ClassOp_Imp str expr -> prPrec i 0 (concatD [printString str, doc (showString "="), prt 0 expr])
 
 instance Print Dummy.Abs.ClassDec where
   prt i = \case
-    Dummy.Abs.Class_Dec uident lident classopdecs -> prPrec i 0 (concatD [doc (showString "class"), prt 0 uident, prt 0 lident, doc (showString "where"), prt 0 classopdecs])
+    Dummy.Abs.Class_Dec str1 str2 classopdecs -> prPrec i 0 (concatD [doc (showString "class"), printString str1, printString str2, doc (showString "where"), prt 0 classopdecs])
 
 instance Print Dummy.Abs.InstDec where
   prt i = \case
-    Dummy.Abs.Inst_Dec uident stype classopimps -> prPrec i 0 (concatD [doc (showString "instance"), prt 0 uident, prt 0 stype, doc (showString "where"), prt 0 classopimps])
-    Dummy.Abs.Inst_Dec_With_Constraint tyc uident stype classopimps -> prPrec i 0 (concatD [doc (showString "instance"), doc (showString "<"), prt 0 tyc, doc (showString ">"), doc (showString "=>"), prt 0 uident, prt 0 stype, doc (showString "where"), prt 0 classopimps])
+    Dummy.Abs.Inst_Dec str stype classopimps -> prPrec i 0 (concatD [doc (showString "instance"), printString str, prt 0 stype, doc (showString "where"), prt 0 classopimps])
+    Dummy.Abs.Inst_Dec_With_Constraint tyc str stype classopimps -> prPrec i 0 (concatD [doc (showString "instance"), doc (showString "<"), prt 0 tyc, doc (showString ">"), doc (showString "=>"), printString str, prt 0 stype, doc (showString "where"), prt 0 classopimps])
 
 instance Print [Dummy.Abs.ClassOpDec] where
   prt _ [] = concatD []
@@ -193,13 +189,13 @@ instance Print [Dummy.Abs.ClassOpImp] where
 instance Print Dummy.Abs.List where
   prt i = \case
     Dummy.Abs.Nil -> prPrec i 0 (concatD [doc (showString "[]")])
-    Dummy.Abs.Cons lident1 lident2 -> prPrec i 0 (concatD [prt 0 lident1, doc (showString ":"), prt 0 lident2])
+    Dummy.Abs.Cons str1 str2 -> prPrec i 0 (concatD [printString str1, doc (showString ":"), printString str2])
 
 instance Print Dummy.Abs.Expr where
   prt i = \case
-    Dummy.Abs.Ass_Expr lident expr -> prPrec i 0 (concatD [prt 0 lident, doc (showString "="), prt 0 expr])
-    Dummy.Abs.Abst_Expr lident expr -> prPrec i 0 (concatD [doc (showString "\\"), prt 0 lident, doc (showString "->"), prt 0 expr])
-    Dummy.Abs.Var_Expr lident -> prPrec i 0 (concatD [prt 0 lident])
+    Dummy.Abs.Ass_Expr str expr -> prPrec i 0 (concatD [printString str, doc (showString "="), prt 0 expr])
+    Dummy.Abs.Abst_Expr str expr -> prPrec i 0 (concatD [doc (showString "\\"), printString str, doc (showString "->"), prt 0 expr])
+    Dummy.Abs.Var_Expr str -> prPrec i 0 (concatD [printString str])
     Dummy.Abs.App_Expr expr1 expr2 -> prPrec i 0 (concatD [prt 0 expr1, prt 0 expr2])
     Dummy.Abs.List_Expr list -> prPrec i 0 (concatD [prt 0 list])
     Dummy.Abs.LCase_Expr expr1 list1 expr2 list2 expr3 -> prPrec i 0 (concatD [doc (showString "case"), prt 0 expr1, doc (showString "of"), prt 0 list1, doc (showString "->"), prt 0 expr2, doc (showString ";"), prt 0 list2, doc (showString "->"), prt 0 expr3])
@@ -208,7 +204,7 @@ instance Print Dummy.Abs.Expr where
 
 instance Print Dummy.Abs.TyC where
   prt i = \case
-    Dummy.Abs.TypeConstraint uident stype -> prPrec i 0 (concatD [prt 0 uident, prt 0 stype])
+    Dummy.Abs.TypeConstraint str stype -> prPrec i 0 (concatD [printString str, prt 0 stype])
 
 instance Print Dummy.Abs.OvType where
   prt i = \case
@@ -221,8 +217,8 @@ instance Print [Dummy.Abs.TyC] where
 
 instance Print Dummy.Abs.SType where
   prt i = \case
-    Dummy.Abs.TVar_SType lident -> prPrec i 0 (concatD [prt 0 lident])
-    Dummy.Abs.TCons_SType uident lident -> prPrec i 0 (concatD [prt 0 uident, prt 0 lident])
+    Dummy.Abs.TVar_SType str -> prPrec i 0 (concatD [printString str])
+    Dummy.Abs.TCons_SType str1 str2 -> prPrec i 0 (concatD [printString str1, printString str2])
     Dummy.Abs.Bool_SType -> prPrec i 0 (concatD [doc (showString "Bool")])
     Dummy.Abs.Arrow_SType stype1 stype2 -> prPrec i 0 (concatD [prt 0 stype1, doc (showString "->"), prt 0 stype2])
     Dummy.Abs.List_SType stype -> prPrec i 0 (concatD [doc (showString "["), prt 0 stype, doc (showString "]")])

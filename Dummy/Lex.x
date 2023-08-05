@@ -47,17 +47,13 @@ T r u e
 F a l s e
     { tok (eitherResIdent T_False) }
 
--- token UIdent
-$c (\_ | ($d | $l)) *
-    { tok (eitherResIdent T_UIdent) }
-
--- token LIdent
-$s (\_ | ($d | $l)) *
-    { tok (eitherResIdent T_LIdent) }
-
 -- Keywords and Ident
 $l $i*
     { tok (eitherResIdent TV) }
+
+-- String
+\" ([$u # [\" \\ \n]] | (\\ (\" | \\ | \' | n | t | r | f)))* \"
+    { tok (TL . unescapeInitTail) }
 
 {
 -- | Create a token with position.
@@ -74,8 +70,6 @@ data Tok
   | TC !String                    -- ^ Character literal.
   | T_True !String
   | T_False !String
-  | T_UIdent !String
-  | T_LIdent !String
   deriving (Eq, Show, Ord)
 
 -- | Smart constructor for 'Tok' for the sake of backwards compatibility.
@@ -140,8 +134,6 @@ tokenText t = case t of
   Err _         -> "#error"
   PT _ (T_True s) -> s
   PT _ (T_False s) -> s
-  PT _ (T_UIdent s) -> s
-  PT _ (T_LIdent s) -> s
 
 -- | Convert a token to a string.
 prToken :: Token -> String

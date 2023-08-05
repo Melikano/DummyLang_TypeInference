@@ -13,27 +13,27 @@ import qualified Data.String
 data Prog = Dummy_Prog [ClassDec] [InstDec] [Expr]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-data ClassOpDec = ClassOp_Dec LIdent SType
+data ClassOpDec = ClassOp_Dec String SType
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-data ClassOpImp = ClassOp_Imp LIdent Expr
+data ClassOpImp = ClassOp_Imp String Expr
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-data ClassDec = Class_Dec UIdent LIdent [ClassOpDec]
+data ClassDec = Class_Dec String String [ClassOpDec]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data InstDec
-    = Inst_Dec UIdent SType [ClassOpImp]
-    | Inst_Dec_With_Constraint TyC UIdent SType [ClassOpImp]
+    = Inst_Dec String SType [ClassOpImp]
+    | Inst_Dec_With_Constraint TyC String SType [ClassOpImp]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-data List = Nil | Cons LIdent LIdent
+data List = Nil | Cons String String
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data Expr
-    = Ass_Expr LIdent Expr
-    | Abst_Expr LIdent Expr
-    | Var_Expr LIdent
+    = Ass_Expr String Expr
+    | Abst_Expr String Expr
+    | Var_Expr String
     | App_Expr Expr Expr
     | List_Expr List
     | LCase_Expr Expr List Expr List Expr
@@ -41,15 +41,15 @@ data Expr
     | False_Expr False
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-data TyC = TypeConstraint UIdent SType
+data TyC = TypeConstraint String SType
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data OvType = OverLoadedType [TyC] SType
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data SType
-    = TVar_SType LIdent
-    | TCons_SType UIdent LIdent
+    = TVar_SType String
+    | TCons_SType String String
     | Bool_SType
     | Arrow_SType SType SType
     | List_SType SType
@@ -62,11 +62,5 @@ newtype True = True String
   deriving (C.Eq, C.Ord, C.Show, C.Read, Data.String.IsString)
 
 newtype False = False String
-  deriving (C.Eq, C.Ord, C.Show, C.Read, Data.String.IsString)
-
-newtype UIdent = UIdent String
-  deriving (C.Eq, C.Ord, C.Show, C.Read, Data.String.IsString)
-
-newtype LIdent = LIdent String
   deriving (C.Eq, C.Ord, C.Show, C.Read, Data.String.IsString)
 
