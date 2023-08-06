@@ -10,3 +10,4 @@ data Class = Class
     methods :: [(String, SType)]
   }
 
+type DefnEnv = [(String, (DType, Expr))]

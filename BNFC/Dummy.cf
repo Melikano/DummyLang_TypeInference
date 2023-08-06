@@ -1,11 +1,11 @@
 token True {"True"};
 token False {"False"};
 
-Dummy_Prog. Prog ::= [ClassDec] [InstDec] [Expr];
+Dummy_Prog. Prog ::= [ClassDec] [InstDec] [Defn];
 
 separator ClassDec ";";
 separator InstDec ";";
-separator Expr ";";
+separator Defn ";";
 
 ClassOp_Dec. ClassOpDec ::= String ":" SType;
 ClassOp_Imp. ClassOpImp ::= String "=" Expr;
@@ -21,7 +21,8 @@ separator ClassOpImp "";
 Nil. List ::= "[]";
 Cons. List ::= String ":" String;
 
-Ass_Expr. Expr ::= String "=" Expr;
+Defn_Expr. Defn ::= String "=" Expr;
+
 Abst_Expr. Expr ::= "\\"String "->" Expr;
 Var_Expr. Expr ::= String;
 App_Expr. Expr ::= Expr Expr;
@@ -29,8 +30,7 @@ List_Expr. Expr ::= List;
 LCase_Expr. Expr ::= "case" Expr "of" List "->" Expr ";" List "->" Expr;
 True_Expr. Expr ::= True;
 False_Expr. Expr ::= False;
-
-
+VarOV_Expr. Expr ::= String SType;
 
 TypeConstraint. TyC ::= String SType;
 OverLoadedType. OvType ::= "<" [TyC] ">" "=>" SType;

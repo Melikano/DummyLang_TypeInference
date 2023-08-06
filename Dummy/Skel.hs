@@ -25,7 +25,7 @@ transFalse x = case x of
 
 transProg :: Dummy.Abs.Prog -> Result
 transProg x = case x of
-  Dummy.Abs.Dummy_Prog classdecs instdecs exprs -> failure x
+  Dummy.Abs.Dummy_Prog classdecs instdecs defns -> failure x
 
 transClassOpDec :: Dummy.Abs.ClassOpDec -> Result
 transClassOpDec x = case x of
@@ -49,9 +49,12 @@ transList x = case x of
   Dummy.Abs.Nil -> failure x
   Dummy.Abs.Cons string1 string2 -> failure x
 
+transDefn :: Dummy.Abs.Defn -> Result
+transDefn x = case x of
+  Dummy.Abs.Defn_Expr string expr -> failure x
+
 transExpr :: Dummy.Abs.Expr -> Result
 transExpr x = case x of
-  Dummy.Abs.Ass_Expr string expr -> failure x
   Dummy.Abs.Abst_Expr string expr -> failure x
   Dummy.Abs.Var_Expr string -> failure x
   Dummy.Abs.App_Expr expr1 expr2 -> failure x
@@ -59,6 +62,7 @@ transExpr x = case x of
   Dummy.Abs.LCase_Expr expr1 list1 expr2 list2 expr3 -> failure x
   Dummy.Abs.True_Expr true -> failure x
   Dummy.Abs.False_Expr false -> failure x
+  Dummy.Abs.VarOV_Expr string stype -> failure x
 
 transTyC :: Dummy.Abs.TyC -> Result
 transTyC x = case x of

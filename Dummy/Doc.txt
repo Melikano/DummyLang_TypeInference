@@ -47,16 +47,16 @@ The symbols -> (production),  **|**  (union)
 and **eps** (empty rule) belong to the BNF notation.
 All other symbols are terminals.
 
-  | //Prog// | -> | //[ClassDec]// //[InstDec]// //[Expr]//
+  | //Prog// | -> | //[ClassDec]// //[InstDec]// //[Defn]//
   | //[ClassDec]// | -> | **eps**
   |  |  **|**  | //ClassDec//
   |  |  **|**  | //ClassDec// ``;`` //[ClassDec]//
   | //[InstDec]// | -> | **eps**
   |  |  **|**  | //InstDec//
   |  |  **|**  | //InstDec// ``;`` //[InstDec]//
-  | //[Expr]// | -> | **eps**
-  |  |  **|**  | //Expr//
-  |  |  **|**  | //Expr// ``;`` //[Expr]//
+  | //[Defn]// | -> | **eps**
+  |  |  **|**  | //Defn//
+  |  |  **|**  | //Defn// ``;`` //[Defn]//
   | //ClassOpDec// | -> | //String// ``:`` //SType//
   | //ClassOpImp// | -> | //String// ``=`` //Expr//
   | //ClassDec// | -> | ``class`` //String// //String// ``where`` //[ClassOpDec]//
@@ -68,14 +68,15 @@ All other symbols are terminals.
   |  |  **|**  | //ClassOpImp// //[ClassOpImp]//
   | //List// | -> | ``[]``
   |  |  **|**  | //String// ``:`` //String//
-  | //Expr// | -> | //String// ``=`` //Expr//
-  |  |  **|**  | ``\`` //String// ``->`` //Expr//
+  | //Defn// | -> | //String// ``=`` //Expr//
+  | //Expr// | -> | ``\`` //String// ``->`` //Expr//
   |  |  **|**  | //String//
   |  |  **|**  | //Expr// //Expr//
   |  |  **|**  | //List//
   |  |  **|**  | ``case`` //Expr// ``of`` //List// ``->`` //Expr// ``;`` //List// ``->`` //Expr//
   |  |  **|**  | //True//
   |  |  **|**  | //False//
+  |  |  **|**  | //String// //SType//
   | //TyC// | -> | //String// //SType//
   | //OvType// | -> | ``<`` //[TyC]// ``>`` ``=>`` //SType//
   | //[TyC]// | -> | **eps**

@@ -10,7 +10,7 @@ import Prelude (String)
 import qualified Prelude as C (Eq, Ord, Show, Read)
 import qualified Data.String
 
-data Prog = Dummy_Prog [ClassDec] [InstDec] [Expr]
+data Prog = Dummy_Prog [ClassDec] [InstDec] [Defn]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data ClassOpDec = ClassOp_Dec String SType
@@ -30,15 +30,18 @@ data InstDec
 data List = Nil | Cons String String
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
+data Defn = Defn_Expr String Expr
+  deriving (C.Eq, C.Ord, C.Show, C.Read)
+
 data Expr
-    = Ass_Expr String Expr
-    | Abst_Expr String Expr
+    = Abst_Expr String Expr
     | Var_Expr String
     | App_Expr Expr Expr
     | List_Expr List
     | LCase_Expr Expr List Expr List Expr
     | True_Expr True
     | False_Expr False
+    | VarOV_Expr String SType
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data TyC = TypeConstraint String SType

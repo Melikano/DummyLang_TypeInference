@@ -11,7 +11,7 @@ module Dummy.Par
   , pProg
   , pListClassDec
   , pListInstDec
-  , pListExpr
+  , pListDefn
   , pClassOpDec
   , pClassOpImp
   , pClassDec
@@ -19,6 +19,7 @@ module Dummy.Par
   , pListClassOpDec
   , pListClassOpImp
   , pList
+  , pDefn
   , pExpr
   , pTyC
   , pOvType
@@ -37,7 +38,7 @@ import Dummy.Lex
 %name pProg Prog
 %name pListClassDec ListClassDec
 %name pListInstDec ListInstDec
-%name pListExpr ListExpr
+%name pListDefn ListDefn
 %name pClassOpDec ClassOpDec
 %name pClassOpImp ClassOpImp
 %name pClassDec ClassDec
@@ -45,6 +46,7 @@ import Dummy.Lex
 %name pListClassOpDec ListClassOpDec
 %name pListClassOpImp ListClassOpImp
 %name pList List
+%name pDefn Defn
 %name pExpr Expr
 %name pTyC TyC
 %name pOvType OvType
@@ -90,7 +92,7 @@ False  : L_False { Dummy.Abs.False $1 }
 
 Prog :: { Dummy.Abs.Prog }
 Prog
-  : ListClassDec ListInstDec ListExpr { Dummy.Abs.Dummy_Prog $1 $2 $3 }
+  : ListClassDec ListInstDec ListDefn { Dummy.Abs.Dummy_Prog $1 $2 $3 }
 
 ListClassDec :: { [Dummy.Abs.ClassDec] }
 ListClassDec
@@ -104,11 +106,11 @@ ListInstDec
   | InstDec { (:[]) $1 }
   | InstDec ';' ListInstDec { (:) $1 $3 }
 
-ListExpr :: { [Dummy.Abs.Expr] }
-ListExpr
+ListDefn :: { [Dummy.Abs.Defn] }
+ListDefn
   : {- empty -} { [] }
-  | Expr { (:[]) $1 }
-  | Expr ';' ListExpr { (:) $1 $3 }
+  | Defn { (:[]) $1 }
+  | Defn ';' ListDefn { (:) $1 $3 }
 
 ClassOpDec :: { Dummy.Abs.ClassOpDec }
 ClassOpDec : String ':' SType { Dummy.Abs.ClassOp_Dec $1 $3 }
@@ -138,16 +140,19 @@ List
   : '[]' { Dummy.Abs.Nil }
   | String ':' String { Dummy.Abs.Cons $1 $3 }
 
+Defn :: { Dummy.Abs.Defn }
+Defn : String '=' Expr { Dummy.Abs.Defn_Expr $1 $3 }
+
 Expr :: { Dummy.Abs.Expr }
 Expr
-  : String '=' Expr { Dummy.Abs.Ass_Expr $1 $3 }
-  | '\\' String '->' Expr { Dummy.Abs.Abst_Expr $2 $4 }
+  : '\\' String '->' Expr { Dummy.Abs.Abst_Expr $2 $4 }
   | String { Dummy.Abs.Var_Expr $1 }
   | Expr Expr { Dummy.Abs.App_Expr $1 $2 }
   | List { Dummy.Abs.List_Expr $1 }
   | 'case' Expr 'of' List '->' Expr ';' List '->' Expr { Dummy.Abs.LCase_Expr $2 $4 $6 $8 $10 }
   | True { Dummy.Abs.True_Expr $1 }
   | False { Dummy.Abs.False_Expr $1 }
+  | String SType { Dummy.Abs.VarOV_Expr $1 $2 }
 
 TyC :: { Dummy.Abs.TyC }
 TyC : String SType { Dummy.Abs.TypeConstraint $1 $2 }
