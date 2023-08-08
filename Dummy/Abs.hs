@@ -6,7 +6,7 @@
 
 module Dummy.Abs where
 
-import Prelude (String)
+import Prelude (Integer, String)
 import qualified Prelude as C (Eq, Ord, Show, Read)
 import qualified Data.String
 
@@ -27,9 +27,6 @@ data InstDec
     | Inst_Dec_With_Constraint TyC String SType [ClassOpImp]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-data List = Nil | Cons String String
-  deriving (C.Eq, C.Ord, C.Show, C.Read)
-
 data Defn = Defn_Expr String Expr
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
@@ -37,11 +34,11 @@ data Expr
     = Abst_Expr String Expr
     | Var_Expr String
     | App_Expr Expr Expr
-    | List_Expr List
-    | LCase_Expr Expr List Expr List Expr
     | True_Expr True
     | False_Expr False
-    | VarOV_Expr String SType
+    | Placeholder_Expr String
+    | List_Expr [Expr]
+    | INT_Expr Integer
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data TyC = TypeConstraint String SType
@@ -56,6 +53,7 @@ data SType
     | Bool_SType
     | Arrow_SType SType SType
     | List_SType SType
+    | Int_SType
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data DType = DType_OvType OvType | DType_SType SType

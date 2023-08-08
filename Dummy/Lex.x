@@ -28,7 +28,7 @@ $u = [. \n]          -- universal: any character
 
 -- Symbols and non-identifier-like reserved words
 
-@rsyms = \; | \: | \= | \< | \> | \= \> | \[ \] | \\ | \- \> | \, | \[ | \]
+@rsyms = \; | \: | \= | \< | \> | \= \> | \\ | \- \> | \[ | \] | \,
 
 :-
 
@@ -54,6 +54,10 @@ $l $i*
 -- String
 \" ([$u # [\" \\ \n]] | (\\ (\" | \\ | \' | n | t | r | f)))* \"
     { tok (TL . unescapeInitTail) }
+
+-- Integer
+$d+
+    { tok TI }
 
 {
 -- | Create a token with position.
@@ -160,13 +164,13 @@ eitherResIdent tv s = treeFind resWords
 -- | The keywords and symbols of the language organized as binary search tree.
 resWords :: BTree
 resWords =
-  b "[" 10
+  b "Bool" 9
     (b "<" 5
        (b ":" 3 (b "->" 2 (b "," 1 N N) N) (b ";" 4 N N))
-       (b ">" 8 (b "=>" 7 (b "=" 6 N N) N) (b "Bool" 9 N N)))
-    (b "class" 15
-       (b "]" 13 (b "\\" 12 (b "[]" 11 N N) N) (b "case" 14 N N))
-       (b "of" 17 (b "instance" 16 N N) (b "where" 18 N N)))
+       (b "=>" 7 (b "=" 6 N N) (b ">" 8 N N)))
+    (b "]" 13
+       (b "[" 11 (b "Integer" 10 N N) (b "\\" 12 N N))
+       (b "instance" 15 (b "class" 14 N N) (b "where" 16 N N)))
   where
   b s n = B bs (TS bs n)
     where

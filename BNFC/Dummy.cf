@@ -18,20 +18,20 @@ Inst_Dec_With_Constraint. InstDec ::= "instance <" TyC "> => " String SType "whe
 separator ClassOpDec "";
 separator ClassOpImp "";
 
-Nil. List ::= "[]";
-Cons. List ::= String ":" String;
-
 Defn_Expr. Defn ::= String "=" Expr;
 
+
+
 Abst_Expr. Expr ::= "\\"String "->" Expr;
-Var_Expr. Expr ::= String;
+Var_Expr. Expr1 ::= String;
 App_Expr. Expr ::= Expr Expr;
-List_Expr. Expr ::= List;
-LCase_Expr. Expr ::= "case" Expr "of" List "->" Expr ";" List "->" Expr;
 True_Expr. Expr ::= True;
 False_Expr. Expr ::= False;
-VarOV_Expr. Expr ::= String SType;
+Placeholder_Expr. Expr ::= String;
+List_Expr. Expr ::= "[" [Expr] "]";
+INT_Expr. Expr ::= Integer;
 
+separator Expr ",";
 TypeConstraint. TyC ::= String SType;
 OverLoadedType. OvType ::= "<" [TyC] ">" "=>" SType;
 separator TyC ",";
@@ -40,6 +40,7 @@ TCons_SType.  SType ::= String String;
 Bool_SType. SType ::= "Bool"; 
 Arrow_SType. SType ::= SType "->" SType;
 List_SType. SType ::= "[" SType "]";
+Int_SType. SType ::= "Integer";
 
 DType_OvType. DType ::= OvType;
 DType_SType. DType ::= SType;

@@ -44,25 +44,26 @@ transInstDec x = case x of
   Dummy.Abs.Inst_Dec string stype classopimps -> failure x
   Dummy.Abs.Inst_Dec_With_Constraint tyc string stype classopimps -> failure x
 
-transList :: Dummy.Abs.List -> Result
-transList x = case x of
-  Dummy.Abs.Nil -> failure x
-  Dummy.Abs.Cons string1 string2 -> failure x
-
 transDefn :: Dummy.Abs.Defn -> Result
 transDefn x = case x of
   Dummy.Abs.Defn_Expr string expr -> failure x
+
+transList :: Dummy.Abs.List -> Result
+transList x = case x of
+  Dummy.Abs.Nil -> failure x
+  Dummy.Abs.Cons expr list -> failure x
+  Dummy.Abs.ListE exprs -> failure x
 
 transExpr :: Dummy.Abs.Expr -> Result
 transExpr x = case x of
   Dummy.Abs.Abst_Expr string expr -> failure x
   Dummy.Abs.Var_Expr string -> failure x
   Dummy.Abs.App_Expr expr1 expr2 -> failure x
-  Dummy.Abs.List_Expr list -> failure x
-  Dummy.Abs.LCase_Expr expr1 list1 expr2 list2 expr3 -> failure x
   Dummy.Abs.True_Expr true -> failure x
   Dummy.Abs.False_Expr false -> failure x
-  Dummy.Abs.VarOV_Expr expr stype -> failure x
+  Dummy.Abs.Placeholder_Expr string -> failure x
+  Dummy.Abs.List_Expr list -> failure x
+  Dummy.Abs.INT_Expr integer -> failure x
 
 transTyC :: Dummy.Abs.TyC -> Result
 transTyC x = case x of
@@ -79,6 +80,7 @@ transSType x = case x of
   Dummy.Abs.Bool_SType -> failure x
   Dummy.Abs.Arrow_SType stype1 stype2 -> failure x
   Dummy.Abs.List_SType stype -> failure x
+  Dummy.Abs.Int_SType -> failure x
 
 transDType :: Dummy.Abs.DType -> Result
 transDType x = case x of

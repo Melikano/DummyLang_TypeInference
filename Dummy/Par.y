@@ -18,9 +18,10 @@ module Dummy.Par
   , pInstDec
   , pListClassOpDec
   , pListClassOpImp
-  , pList
   , pDefn
   , pExpr
+  , pExpr1
+  , pListExpr
   , pTyC
   , pOvType
   , pListTyC
@@ -45,9 +46,10 @@ import Dummy.Lex
 %name pInstDec InstDec
 %name pListClassOpDec ListClassOpDec
 %name pListClassOpImp ListClassOpImp
-%name pList List
 %name pDefn Defn
 %name pExpr Expr
+%name pExpr1 Expr1
+%name pListExpr ListExpr
 %name pTyC TyC
 %name pOvType OvType
 %name pListTyC ListTyC
@@ -66,20 +68,22 @@ import Dummy.Lex
   '=>'       { PT _ (TS _ 7)     }
   '>'        { PT _ (TS _ 8)     }
   'Bool'     { PT _ (TS _ 9)     }
-  '['        { PT _ (TS _ 10)    }
-  '[]'       { PT _ (TS _ 11)    }
+  'Integer'  { PT _ (TS _ 10)    }
+  '['        { PT _ (TS _ 11)    }
   '\\'       { PT _ (TS _ 12)    }
   ']'        { PT _ (TS _ 13)    }
-  'case'     { PT _ (TS _ 14)    }
-  'class'    { PT _ (TS _ 15)    }
-  'instance' { PT _ (TS _ 16)    }
-  'of'       { PT _ (TS _ 17)    }
-  'where'    { PT _ (TS _ 18)    }
+  'class'    { PT _ (TS _ 14)    }
+  'instance' { PT _ (TS _ 15)    }
+  'where'    { PT _ (TS _ 16)    }
+  L_integ    { PT _ (TI $$)      }
   L_quoted   { PT _ (TL $$)      }
   L_True     { PT _ (T_True $$)  }
   L_False    { PT _ (T_False $$) }
 
 %%
+
+Integer :: { Integer }
+Integer  : L_integ  { (read $1) :: Integer }
 
 String  :: { String }
 String   : L_quoted { $1 }
@@ -135,24 +139,27 @@ ListClassOpImp :: { [Dummy.Abs.ClassOpImp] }
 ListClassOpImp
   : {- empty -} { [] } | ClassOpImp ListClassOpImp { (:) $1 $2 }
 
-List :: { Dummy.Abs.List }
-List
-  : '[]' { Dummy.Abs.Nil }
-  | String ':' String { Dummy.Abs.Cons $1 $3 }
-
 Defn :: { Dummy.Abs.Defn }
 Defn : String '=' Expr { Dummy.Abs.Defn_Expr $1 $3 }
 
 Expr :: { Dummy.Abs.Expr }
 Expr
   : '\\' String '->' Expr { Dummy.Abs.Abst_Expr $2 $4 }
-  | String { Dummy.Abs.Var_Expr $1 }
   | Expr Expr { Dummy.Abs.App_Expr $1 $2 }
-  | List { Dummy.Abs.List_Expr $1 }
-  | 'case' Expr 'of' List '->' Expr ';' List '->' Expr { Dummy.Abs.LCase_Expr $2 $4 $6 $8 $10 }
   | True { Dummy.Abs.True_Expr $1 }
   | False { Dummy.Abs.False_Expr $1 }
-  | String SType { Dummy.Abs.VarOV_Expr $1 $2 }
+  | String { Dummy.Abs.Placeholder_Expr $1 }
+  | '[' ListExpr ']' { Dummy.Abs.List_Expr $2 }
+  | Integer { Dummy.Abs.INT_Expr $1 }
+
+Expr1 :: { Dummy.Abs.Expr }
+Expr1 : String { Dummy.Abs.Var_Expr $1 }
+
+ListExpr :: { [Dummy.Abs.Expr] }
+ListExpr
+  : {- empty -} { [] }
+  | Expr { (:[]) $1 }
+  | Expr ',' ListExpr { (:) $1 $3 }
 
 TyC :: { Dummy.Abs.TyC }
 TyC : String SType { Dummy.Abs.TypeConstraint $1 $2 }
@@ -174,6 +181,7 @@ SType
   | 'Bool' { Dummy.Abs.Bool_SType }
   | SType '->' SType { Dummy.Abs.Arrow_SType $1 $3 }
   | '[' SType ']' { Dummy.Abs.List_SType $2 }
+  | 'Integer' { Dummy.Abs.Int_SType }
 
 DType :: { Dummy.Abs.DType }
 DType
