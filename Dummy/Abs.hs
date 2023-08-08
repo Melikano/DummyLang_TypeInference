@@ -19,12 +19,12 @@ data ClassOpDec = ClassOp_Dec String SType
 data ClassOpImp = ClassOp_Imp String Expr
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-data ClassDec = Class_Dec String String [ClassOpDec]
+data ClassDec = Class_Dec [TyC] String String [ClassOpDec]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data InstDec
     = Inst_Dec String SType [ClassOpImp]
-    | Inst_Dec_With_Constraint TyC String SType [ClassOpImp]
+    | Inst_Dec_With_Constraint [TyC] String SType [ClassOpImp]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data Defn = Defn_Expr String Expr

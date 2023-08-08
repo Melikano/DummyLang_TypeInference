@@ -10,10 +10,11 @@ separator Defn ";";
 ClassOp_Dec. ClassOpDec ::= String ":" SType;
 ClassOp_Imp. ClassOpImp ::= String "=" Expr;
 
-Class_Dec. ClassDec ::= "class" String String "where" [ClassOpDec];
+Class_Dec. ClassDec ::= "class <" [TyC] "> => " String String "where" [ClassOpDec];
 Inst_Dec. InstDec ::= "instance" String SType "where" [ClassOpImp];
-Inst_Dec_With_Constraint. InstDec ::= "instance <" TyC "> => " String SType "where" [ClassOpImp];
+Inst_Dec_With_Constraint. InstDec ::= "instance <" [TyC] "> => " String SType "where" [ClassOpImp];
 
+separator TyC ",";
 
 separator ClassOpDec "";
 separator ClassOpImp "";

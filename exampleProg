@@ -1,4 +1,4 @@
-class "Eq" "a" where "equal" : "a" -> "a" -> Bool ;
+class < > => "Eq" "a" where "equal" : "a" -> "a" -> Bool ;
 
 instance <"Eq" "a"> => "Eq" ["a"] where
     "equal" = \"xs" -> \"ys" -> True ;

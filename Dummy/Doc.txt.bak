@@ -38,8 +38,8 @@ The reserved words used in Dummy are the following:
 
 The symbols used in Dummy are the following:
   | ; | : | = | <
-  | > | => | [] | [
-  | ] | \ | -> | ,
+  | > | => | \ | ->
+  | [ | ] | , |
 
 ===Comments===
 There are no single-line comments in the grammar.There are no multiple-line comments in the grammar.
@@ -62,7 +62,7 @@ All other symbols are terminals.
   |  |  **|**  | //Defn// ``;`` //[Defn]//
   | //ClassOpDec// | -> | //String// ``:`` //SType//
   | //ClassOpImp// | -> | //String// ``=`` //Expr//
-  | //ClassDec// | -> | ``class`` //String// //String// ``where`` //[ClassOpDec]//
+  | //ClassDec// | -> | ``class`` ``<`` //TyC// ``>`` ``=>`` //String// //String// ``where`` //[ClassOpDec]//
   | //InstDec// | -> | ``instance`` //String// //SType// ``where`` //[ClassOpImp]//
   |  |  **|**  | ``instance`` ``<`` //TyC// ``>`` ``=>`` //String// //SType// ``where`` //[ClassOpImp]//
   | //[ClassOpDec]// | -> | **eps**
@@ -70,15 +70,12 @@ All other symbols are terminals.
   | //[ClassOpImp]// | -> | **eps**
   |  |  **|**  | //ClassOpImp// //[ClassOpImp]//
   | //Defn// | -> | //String// ``=`` //Expr//
-  | //List// | -> | ``[]``
-  |  |  **|**  | //Expr// ``:`` //List//
-  |  |  **|**  | ``[`` //[Expr]// ``]``
   | //Expr// | -> | ``\`` //String// ``->`` //Expr//
   |  |  **|**  | //Expr// //Expr//
   |  |  **|**  | //True//
   |  |  **|**  | //False//
   |  |  **|**  | //String//
-  |  |  **|**  | //List//
+  |  |  **|**  | ``[`` //[Expr]// ``]``
   |  |  **|**  | //Integer//
   | //Expr1// | -> | //String//
   | //[Expr]// | -> | **eps**

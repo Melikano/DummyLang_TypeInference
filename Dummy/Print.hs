@@ -171,12 +171,20 @@ instance Print Dummy.Abs.ClassOpImp where
 
 instance Print Dummy.Abs.ClassDec where
   prt i = \case
-    Dummy.Abs.Class_Dec str1 str2 classopdecs -> prPrec i 0 (concatD [doc (showString "class"), printString str1, printString str2, doc (showString "where"), prt 0 classopdecs])
+    Dummy.Abs.Class_Dec tycs str1 str2 classopdecs -> prPrec i 0 (concatD [doc (showString "class"), doc (showString "<"), prt 0 tycs, doc (showString ">"), doc (showString "=>"), printString str1, printString str2, doc (showString "where"), prt 0 classopdecs])
 
 instance Print Dummy.Abs.InstDec where
   prt i = \case
     Dummy.Abs.Inst_Dec str stype classopimps -> prPrec i 0 (concatD [doc (showString "instance"), printString str, prt 0 stype, doc (showString "where"), prt 0 classopimps])
-    Dummy.Abs.Inst_Dec_With_Constraint tyc str stype classopimps -> prPrec i 0 (concatD [doc (showString "instance"), doc (showString "<"), prt 0 tyc, doc (showString ">"), doc (showString "=>"), printString str, prt 0 stype, doc (showString "where"), prt 0 classopimps])
+    Dummy.Abs.Inst_Dec_With_Constraint tycs str stype classopimps -> prPrec i 0 (concatD [doc (showString "instance"), doc (showString "<"), prt 0 tycs, doc (showString ">"), doc (showString "=>"), printString str, prt 0 stype, doc (showString "where"), prt 0 classopimps])
+
+instance Print [Dummy.Abs.TyC] where
+  prt _ [] = concatD []
+  prt _ [] = concatD []
+  prt _ [x] = concatD [prt 0 x]
+  prt _ [x] = concatD [prt 0 x]
+  prt _ (x:xs) = concatD [prt 0 x, doc (showString ","), prt 0 xs]
+  prt _ (x:xs) = concatD [prt 0 x, doc (showString ","), prt 0 xs]
 
 instance Print [Dummy.Abs.ClassOpDec] where
   prt _ [] = concatD []
@@ -213,11 +221,6 @@ instance Print Dummy.Abs.TyC where
 instance Print Dummy.Abs.OvType where
   prt i = \case
     Dummy.Abs.OverLoadedType tycs stype -> prPrec i 0 (concatD [doc (showString "<"), prt 0 tycs, doc (showString ">"), doc (showString "=>"), prt 0 stype])
-
-instance Print [Dummy.Abs.TyC] where
-  prt _ [] = concatD []
-  prt _ [x] = concatD [prt 0 x]
-  prt _ (x:xs) = concatD [prt 0 x, doc (showString ","), prt 0 xs]
 
 instance Print Dummy.Abs.SType where
   prt i = \case

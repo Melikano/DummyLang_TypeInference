@@ -28,7 +28,7 @@ $u = [. \n]          -- universal: any character
 
 -- Symbols and non-identifier-like reserved words
 
-@rsyms = \; | \: | \= | \< | \> | \= \> | \[ \] | \[ | \] | \\ | \- \> | \,
+@rsyms = \; | \: | \= | \< | \> | \= \> | \\ | \- \> | \[ | \] | \,
 
 :-
 
@@ -168,9 +168,9 @@ resWords =
     (b "<" 5
        (b ":" 3 (b "->" 2 (b "," 1 N N) N) (b ";" 4 N N))
        (b "=>" 7 (b "=" 6 N N) (b ">" 8 N N)))
-    (b "]" 14
-       (b "[]" 12 (b "[" 11 (b "Integer" 10 N N) N) (b "\\" 13 N N))
-       (b "instance" 16 (b "class" 15 N N) (b "where" 17 N N)))
+    (b "]" 13
+       (b "[" 11 (b "Integer" 10 N N) (b "\\" 12 N N))
+       (b "instance" 15 (b "class" 14 N N) (b "where" 16 N N)))
   where
   b s n = B bs (TS bs n)
     where

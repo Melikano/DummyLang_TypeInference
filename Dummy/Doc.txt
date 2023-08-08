@@ -38,8 +38,8 @@ The reserved words used in Dummy are the following:
 
 The symbols used in Dummy are the following:
   | ; | : | = | <
-  | > | => | \ | ->
-  | [ | ] | , |
+  | > | => | , | \
+  | -> | [ | ] |
 
 ===Comments===
 There are no single-line comments in the grammar.There are no multiple-line comments in the grammar.
@@ -62,9 +62,15 @@ All other symbols are terminals.
   |  |  **|**  | //Defn// ``;`` //[Defn]//
   | //ClassOpDec// | -> | //String// ``:`` //SType//
   | //ClassOpImp// | -> | //String// ``=`` //Expr//
-  | //ClassDec// | -> | ``class`` //String// //String// ``where`` //[ClassOpDec]//
+  | //ClassDec// | -> | ``class`` ``<`` //[TyC]// ``>`` ``=>`` //String// //String// ``where`` //[ClassOpDec]//
   | //InstDec// | -> | ``instance`` //String// //SType// ``where`` //[ClassOpImp]//
-  |  |  **|**  | ``instance`` ``<`` //TyC// ``>`` ``=>`` //String// //SType// ``where`` //[ClassOpImp]//
+  |  |  **|**  | ``instance`` ``<`` //[TyC]// ``>`` ``=>`` //String// //SType// ``where`` //[ClassOpImp]//
+  | //[TyC]// | -> | **eps**
+  |  |  **|**  | //TyC//
+  |  |  **|**  | //TyC// ``,`` //[TyC]//
+  |  |  **|**  | **eps**
+  |  |  **|**  | //TyC//
+  |  |  **|**  | //TyC// ``,`` //[TyC]//
   | //[ClassOpDec]// | -> | **eps**
   |  |  **|**  | //ClassOpDec// //[ClassOpDec]//
   | //[ClassOpImp]// | -> | **eps**
@@ -83,9 +89,6 @@ All other symbols are terminals.
   |  |  **|**  | //Expr// ``,`` //[Expr]//
   | //TyC// | -> | //String// //SType//
   | //OvType// | -> | ``<`` //[TyC]// ``>`` ``=>`` //SType//
-  | //[TyC]// | -> | **eps**
-  |  |  **|**  | //TyC//
-  |  |  **|**  | //TyC// ``,`` //[TyC]//
   | //SType// | -> | //String//
   |  |  **|**  | //String// //String//
   |  |  **|**  | ``Bool``

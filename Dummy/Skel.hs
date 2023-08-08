@@ -37,12 +37,12 @@ transClassOpImp x = case x of
 
 transClassDec :: Dummy.Abs.ClassDec -> Result
 transClassDec x = case x of
-  Dummy.Abs.Class_Dec string1 string2 classopdecs -> failure x
+  Dummy.Abs.Class_Dec tycs string1 string2 classopdecs -> failure x
 
 transInstDec :: Dummy.Abs.InstDec -> Result
 transInstDec x = case x of
   Dummy.Abs.Inst_Dec string stype classopimps -> failure x
-  Dummy.Abs.Inst_Dec_With_Constraint tyc string stype classopimps -> failure x
+  Dummy.Abs.Inst_Dec_With_Constraint tycs string stype classopimps -> failure x
 
 transDefn :: Dummy.Abs.Defn -> Result
 transDefn x = case x of

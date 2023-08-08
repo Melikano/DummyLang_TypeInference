@@ -19,7 +19,7 @@ data ClassOpDec = ClassOp_Dec String SType
 data ClassOpImp = ClassOp_Imp String Expr
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-data ClassDec = Class_Dec String String [ClassOpDec]
+data ClassDec = Class_Dec TyC String String [ClassOpDec]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data InstDec
@@ -30,9 +30,6 @@ data InstDec
 data Defn = Defn_Expr String Expr
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-data List = Nil | Cons Expr List | ListE [Expr]
-  deriving (C.Eq, C.Ord, C.Show, C.Read)
-
 data Expr
     = Abst_Expr String Expr
     | Var_Expr String
@@ -40,7 +37,7 @@ data Expr
     | True_Expr True
     | False_Expr False
     | Placeholder_Expr String
-    | List_Expr List
+    | List_Expr [Expr]
     | INT_Expr Integer
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 

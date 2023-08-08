@@ -16,6 +16,7 @@ module Dummy.Par
   , pClassOpImp
   , pClassDec
   , pInstDec
+  , pListTyC
   , pListClassOpDec
   , pListClassOpImp
   , pDefn
@@ -24,7 +25,6 @@ module Dummy.Par
   , pListExpr
   , pTyC
   , pOvType
-  , pListTyC
   , pSType
   , pDType
   ) where
@@ -44,6 +44,7 @@ import Dummy.Lex
 %name pClassOpImp ClassOpImp
 %name pClassDec ClassDec
 %name pInstDec InstDec
+%name pListTyC ListTyC
 %name pListClassOpDec ListClassOpDec
 %name pListClassOpImp ListClassOpImp
 %name pDefn Defn
@@ -52,7 +53,6 @@ import Dummy.Lex
 %name pListExpr ListExpr
 %name pTyC TyC
 %name pOvType OvType
-%name pListTyC ListTyC
 %name pSType SType
 %name pDType DType
 -- no lexer declaration
@@ -124,12 +124,21 @@ ClassOpImp : String '=' Expr { Dummy.Abs.ClassOp_Imp $1 $3 }
 
 ClassDec :: { Dummy.Abs.ClassDec }
 ClassDec
-  : 'class' String String 'where' ListClassOpDec { Dummy.Abs.Class_Dec $2 $3 $5 }
+  : 'class' '<' ListTyC '>' '=>' String String 'where' ListClassOpDec { Dummy.Abs.Class_Dec $3 $6 $7 $9 }
 
 InstDec :: { Dummy.Abs.InstDec }
 InstDec
   : 'instance' String SType 'where' ListClassOpImp { Dummy.Abs.Inst_Dec $2 $3 $5 }
-  | 'instance' '<' TyC '>' '=>' String SType 'where' ListClassOpImp { Dummy.Abs.Inst_Dec_With_Constraint $3 $6 $7 $9 }
+  | 'instance' '<' ListTyC '>' '=>' String SType 'where' ListClassOpImp { Dummy.Abs.Inst_Dec_With_Constraint $3 $6 $7 $9 }
+
+ListTyC :: { [Dummy.Abs.TyC] }
+ListTyC
+  : {- empty -} { [] }
+  | TyC { (:[]) $1 }
+  | TyC ',' ListTyC { (:) $1 $3 }
+  | {- empty -} { [] }
+  | TyC { (:[]) $1 }
+  | TyC ',' ListTyC { (:) $1 $3 }
 
 ListClassOpDec :: { [Dummy.Abs.ClassOpDec] }
 ListClassOpDec
@@ -167,12 +176,6 @@ TyC : String SType { Dummy.Abs.TypeConstraint $1 $2 }
 OvType :: { Dummy.Abs.OvType }
 OvType
   : '<' ListTyC '>' '=>' SType { Dummy.Abs.OverLoadedType $2 $5 }
-
-ListTyC :: { [Dummy.Abs.TyC] }
-ListTyC
-  : {- empty -} { [] }
-  | TyC { (:[]) $1 }
-  | TyC ',' ListTyC { (:) $1 $3 }
 
 SType :: { Dummy.Abs.SType }
 SType
